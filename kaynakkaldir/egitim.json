@@ -1,0 +1,39 @@
+{
+  "egitim_materyali": [
+    {
+      "konu": "React Hooks",
+      "aciklama": "React fonksiyonel bileşenlerinde state ve lifecycle yönetimi",
+      "ornekler": [
+        {
+          "hook_adi": "useState",
+          "kullanim": "const [state, setState] = useState(initialValue);",
+          "kaynak": "React Official Documentation"
+        },
+        {
+          "hook_adi": "useEffect",
+          "kullanim": "useEffect(() => { /* side effect */ }, [dependencies]);",
+          "source": "React Hooks Guide"
+        }
+      ]
+    },
+    {
+      "konu": "Node.js Express",
+      "aciklama": "Node.js web framework'ü ile API geliştirme",
+      "ornekler": [
+        {
+          "islem": "GET request",
+          "kod": "app.get('/api/users', (req, res) => { res.json(users); });",
+          "referans": "Express.js Documentation"
+        }
+      ],
+      "kaynaklar": [
+        "Express.js Official Guide",
+        "Node.js Best Practices"
+      ]
+    }
+  ],
+  "genel_referanslar": {
+    "ana_kaynaklar": ["MDN Web Docs", "Official Documentation"],
+    "ek_materyaller": ["Tutorials Point", "W3Schools"]
+  }
+}

@@ -1,0 +1,59 @@
+{  "api_settings": {
+    "providers": [
+      {
+        "name": "gemini",
+        "api_keys": [
+           "AIzaSyCtouTxAmnxmHGStK_nlRjBr_xBVpCz-L0",
+        "AIzaSyAYMdnve8dgd0p4phXisn1elvwJdZMDny0",
+        "AIzaSyDSo5xPkuhlAZUSEEeABOKoLL1ANVLGFEs",
+        "AIzaSyCkrD3IeuudDVAaRRm434gHL9K12fmj-Yw",
+        "AIzaSyCBv61VQSQUa7EVXGB9ttq9Xv-B4059JW0"
+
+        ],
+        "model": "gemini-1.5-flash-latest",
+        "enabled": true,
+        "rate_limit_delay": 1.0,
+        "max_requests_per_minute": 60,
+        "key_rotation_strategy": "round_robin"
+      },
+      {
+        "name": "openai",
+        "api_keys": [
+          "YOUR_OPENAI_API_KEY_1",
+          "YOUR_OPENAI_API_KEY_2",
+          "YOUR_OPENAI_API_KEY_3"
+        ],
+        "model": "gpt-3.5-turbo",
+        "enabled": false,
+        "rate_limit_delay": 1.0,
+        "max_requests_per_minute": 60,
+        "key_rotation_strategy": "round_robin"
+      }
+    ]
+  },
+  "augmentation_settings": {
+    "variations_per_question": 10,
+    "min_variations": 5,
+    "max_variations": 20,
+    "variation_types": {
+      "kisisel_senaryo": 2,
+      "samimi_gunluk": 2,
+      "basit_direkt": 2,
+      "yazim_hatali": 2,
+      "farkli_soru_koku": 2
+    }
+  },
+  "processing_settings": {
+    "input_file": "train.json",
+    "output_file": "train_augmented.json",
+    "process_limit": null,
+    "max_concurrent_requests": 5,
+    "batch_size": 10,
+    "backup_enabled": true
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "augmentation.log",
+    "console_output": true
+  }
+}

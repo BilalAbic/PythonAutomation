@@ -1,0 +1,33 @@
+{
+  "sorular": [
+    {
+      "id": 1,
+      "soru": "Python'da liste nasıl oluşturulur?",
+      "cevap": "Python'da liste köşeli parantezler [] kullanılarak oluşturulur. Örnek: my_list = [1, 2, 3, 'hello']",
+      "kaynak": "Python Documentation - Lists",
+      "kategori": "Temel Python"
+    },
+    {
+      "id": 2,
+      "soru": "JavaScript'te fonksiyon nasıl tanımlanır?",
+      "cevap": "JavaScript'te function anahtar kelimesi kullanılır. Örnek: function myFunction() { return 'Hello'; }",
+      "source": "MDN Web Docs - Functions",
+      "kategori": "JavaScript Temelleri"
+    },
+    {
+      "id": 3,
+      "soru": "SQL'de JOIN nedir?",
+      "cevap": "JOIN, iki veya daha fazla tabloyu ilişkili sütunlar üzerinden birleştirmek için kullanılır.",
+      "kaynaklar": [
+        "SQL Tutorial - W3Schools",
+        "MySQL Documentation"
+      ],
+      "kategori": "Veritabanı"
+    }
+  ],
+  "genel_bilgiler": {
+    "toplam_soru": 3,
+    "kategoriler": ["Temel Python", "JavaScript Temelleri", "Veritabanı"],
+    "referans": "Programlama Soruları Veritabanı v1.0"
+  }
+}

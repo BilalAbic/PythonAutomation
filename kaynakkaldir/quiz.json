@@ -1,0 +1,31 @@
+{
+  "quiz": {
+    "baslik": "Web Geliştirme Quiz",
+    "sorular": [
+      {
+        "soru_no": 1,
+        "soru_metni": "HTML'de h1 etiketi neyi temsil eder?",
+        "secenekler": ["Ana başlık", "Alt başlık", "Paragraf", "Link"],
+        "dogru_cevap": "Ana başlık",
+        "kaynak": "HTML5 Specification",
+        "zorluk": "kolay"
+      },
+      {
+        "soru_no": 2,
+        "soru_metni": "CSS'te margin özelliği ne işe yarar?",
+        "secenekler": ["İç boşluk", "Dış boşluk", "Kenarlık", "Arkaplan"],
+        "dogru_cevap": "Dış boşluk",
+        "sources": ["CSS Reference", "MDN Documentation"],
+        "zorluk": "orta"
+      }
+    ],
+    "metadata": {
+      "olusturma_tarihi": "2025-06-15",
+      "version": "1.0",
+      "referans_kaynaklar": [
+        "W3C HTML5 Spec",
+        "CSS3 Reference Guide"
+      ]
+    }
+  }
+}

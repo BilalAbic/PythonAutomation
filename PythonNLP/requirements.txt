@@ -1,0 +1,5 @@
+PyMuPDF==1.23.9
+google-generativeai>=0.3.2
+requests==2.31.0
+pandas==2.1.4
+numpy==1.24.3
