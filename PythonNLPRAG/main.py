@@ -455,7 +455,7 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
         return None
     
     def _process_single_pdf(self, pdf_path: Path) -> bool:
-        """Process a single PDF file and generate Q&A pairs."""
+        """Process a single PDF file and generate Q&A pairs with chunking and proactive key rotation."""
         try:
             self.logger.info(f"Processing: {pdf_path.name}")
             
@@ -466,22 +466,62 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
                 self.logger.warning(f"No text content extracted from {pdf_path.name}")
                 return False
             
-            # Generate Q&A pairs using Gemini API
-            qa_pairs = self._call_gemini_api(text_content, images)
+            # Split text into chunks to avoid overwhelming single API key
+            chunk_size = 50000  # characters per chunk
+            text_chunks = []
+            for i in range(0, len(text_content), chunk_size):
+                chunk = text_content[i:i + chunk_size]
+                text_chunks.append(chunk)
             
-            if not qa_pairs:
-                self.logger.error(f"Failed to generate Q&A pairs for {pdf_path.name}")
+            # Split images proportionally across chunks
+            images_per_chunk = max(1, len(images) // len(text_chunks)) if images else 0
+            
+            self.logger.info(f"Split {pdf_path.name} into {len(text_chunks)} chunks")
+            
+            all_qa_pairs = []
+            
+            # Process each chunk with proactive API key rotation
+            for chunk_idx, text_chunk in enumerate(text_chunks):
+                self.logger.info(f"Processing chunk {chunk_idx + 1}/{len(text_chunks)} of {pdf_path.name}")
+                
+                # Rotate API key proactively every 2 chunks to distribute load
+                if chunk_idx > 0 and chunk_idx % 2 == 0 and len(self.config['api_keys']) > 1:
+                    if self._rotate_api_key():
+                        self.logger.info(f"Proactively rotated API key for chunk {chunk_idx + 1}")
+                
+                # Get images for this chunk
+                start_img = chunk_idx * images_per_chunk
+                end_img = min((chunk_idx + 1) * images_per_chunk, len(images))
+                chunk_images = images[start_img:end_img] if images else []
+                
+                # Generate Q&A pairs for this chunk
+                qa_pairs = self._call_gemini_api(text_chunk, chunk_images)
+                
+                if qa_pairs:
+                    all_qa_pairs.extend(qa_pairs)
+                    self.logger.info(f"Chunk {chunk_idx + 1}: Generated {len(qa_pairs)} Q&A pairs")
+                else:
+                    self.logger.warning(f"Failed to generate Q&A pairs for chunk {chunk_idx + 1}")
+                
+                # Add delay between chunks to respect rate limits
+                if chunk_idx < len(text_chunks) - 1:  # Don't delay after last chunk
+                    chunk_delay = max(3, self.config.get('min_delay_between_calls', 5))
+                    self.logger.info(f"Waiting {chunk_delay}s before next chunk...")
+                    time.sleep(chunk_delay)
+            
+            if not all_qa_pairs:
+                self.logger.error(f"Failed to generate any Q&A pairs for {pdf_path.name}")
                 return False
             
             # Add source information and save to output file
             output_path = Path(self.config['output_folder']) / self.config['output_filename']
             
             with open(output_path, 'a', encoding='utf-8') as f:
-                for qa in qa_pairs:
+                for qa in all_qa_pairs:
                     qa['kaynak'] = pdf_path.name
                     f.write(json.dumps(qa, ensure_ascii=False) + '\n')
             
-            self.logger.info(f"Successfully processed {pdf_path.name}: {len(qa_pairs)} Q&A pairs generated")
+            self.logger.info(f"Successfully processed {pdf_path.name}: {len(all_qa_pairs)} total Q&A pairs generated from {len(text_chunks)} chunks")
             return True
             
         except Exception as e:

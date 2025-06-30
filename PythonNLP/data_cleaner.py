@@ -18,11 +18,11 @@ class DataCleaner:
         self.quality_rules = {
             'min_question_length': 10,
             'min_answer_length': 20,
-            'max_question_length': 500,
-            'max_answer_length': 2000,
+            'max_question_length': 1024,
+            'max_answer_length': 3400,
             'min_word_count_question': 3,
             'min_word_count_answer': 5,
-            'answer_question_ratio': 1.5  # Cevap en az soru uzunluğunun 1.5 katı olmalı
+            'answer_question_ratio': 1.5  # Cevap en az soru uzunluğunun 1.1 katı olmalı
         }
         
         # Kalitesiz içerik belirteçleri
@@ -327,7 +327,7 @@ def main():
     print("=" * 30)
     
     # Dosya kontrolü
-    input_file = "iki_kaynak_birlesimi.json"
+    input_file = "gemini3pdfkarisik.json"
     if not os.path.exists(input_file):
         print(f"❌ {input_file} dosyası bulunamadı!")
         print("Önce soru-cevap üretimi yapmalısınız.")
