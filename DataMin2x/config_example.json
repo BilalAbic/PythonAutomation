@@ -1,0 +1,12 @@
+{
+  "api_keys": [
+    "YOUR_GEMINI_API_KEY_1",
+    "YOUR_GEMINI_API_KEY_2",
+    "..."
+  ],
+  "safety_settings": {
+    "batch_size": 10,
+    "delay_between_requests": 3,
+    "max_retries": 5
+  }
+} 

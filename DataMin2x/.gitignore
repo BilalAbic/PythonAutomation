@@ -1,0 +1,200 @@
+# =================================
+# Ultra Safe Data Augmentation
+# .gitignore dosyası
+# =================================
+
+# ============ SENSITIVE FILES ============
+# API anahtarları ve konfigürasyon
+config.json
+config_backup_*.json
+api_keys.txt
+*.key
+
+# ============ OUTPUT & DATA FILES ============
+# Üretilen veri dosyaları
+output/
+backups/
+augmented_data_*.json
+final_dataset_*.json
+final_report.json
+
+# Orijinal data dosyaları (çok büyük olabilir)
+250630AllData.json
+*.json
+!requirements.json
+!package.json
+
+# ============ SYSTEM FILES ============
+# Checkpoint ve durum dosyaları
+checkpoints/
+EMERGENCY_STOP
+emergency_shutdown.json
+
+# Log dosyaları
+logs/
+*.log
+*.log.*
+
+# ============ PYTHON FILES ============
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# ============ IDE & EDITOR FILES ============
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ============ OS FILES ============
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Linux
+*~
+.nfs*
+
+# ============ TEMPORARY FILES ============
+# Geçici dosyalar
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+test_*.py
+temp_*.py
+debug_*.py
+
+# Temp klasörler
+temp/
+tmp/
+temporary/
+
+# ============ PROJECT SPECIFIC ============
+# API test dosyaları
+api_test_results.txt
+key_test_*.json
+
+# Memory dump files
+*.dmp
+*.dump
+
+# Large dataset files (>100MB)
+*_large.json
+big_*.json
+
+# Benchmark files
+benchmark_*.json
+performance_*.json
+
+# ============ DOCUMENTATION TEMP ============
+# Auto-generated docs
+docs/_build/
+docs/build/
+
+# ============ SECURITY ============
+# Secrets and credentials
+.env
+.env.local
+.env.*.local
+secrets.json
+credentials.json
+*.pem
+*.p12
+*.pfx
+
+# ============ ALLOW SPECIFIC FILES ============
+# README ve dokümantasyon dosyalarını dahil et
+!README.md
+!requirements.txt
+!.gitignore
+
+# Örnek config dosyasını dahil et (API keyleri olmadan)
+!config_example.json 
