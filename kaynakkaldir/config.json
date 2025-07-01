@@ -3,11 +3,11 @@
       {
         "name": "gemini",
         "api_keys": [
-           "AIzaSyCtouTxAmnxmHGStK_nlRjBr_xBVpCz-L0",
-        "AIzaSyAYMdnve8dgd0p4phXisn1elvwJdZMDny0",
-        "AIzaSyDSo5xPkuhlAZUSEEeABOKoLL1ANVLGFEs",
-        "AIzaSyCkrD3IeuudDVAaRRm434gHL9K12fmj-Yw",
-        "AIzaSyCBv61VQSQUa7EVXGB9ttq9Xv-B4059JW0"
+           "",
+        "",
+        "",
+        "",
+        ""
 
         ],
         "model": "gemini-1.5-flash-latest",
