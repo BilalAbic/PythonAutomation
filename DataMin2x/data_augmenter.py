@@ -11,6 +11,7 @@ import asyncio
 import logging
 import os
 import gc
+import glob
 import hashlib
 import signal
 import sys
@@ -606,14 +607,40 @@ Sadece JSON yanıtı ver!"""
         with open('checkpoints/latest.json', 'w', encoding='utf-8') as f:
             json.dump(checkpoint, f, ensure_ascii=False, indent=2)
             
-    def resume_from_checkpoint(self) -> int:
-        """Checkpoint'ten devam"""
+    def resume_from_checkpoint(self) -> tuple:
+        """Checkpoint'ten devam - VERİ KAYBI DÜZELTİLDİ"""
         try:
             with open('checkpoints/latest.json', 'r', encoding='utf-8') as f:
                 checkpoint = json.load(f)
-            return checkpoint.get('resume_point', 0)
+            
+            resume_point = checkpoint.get('resume_point', 0)
+            
+            if resume_point == 0:
+                return 0, []
+            
+            # Önceki backup'ları yükle
+            self.logger.info(f"🔄 Resume: Batch {resume_point}'ten devam, önceki backup'lar yükleniyor...")
+            
+            previous_data = []
+            backup_files = glob.glob('backups/backup_batch_*.json')
+            backup_files.sort()
+            
+            for backup_file in backup_files:
+                try:
+                    batch_num = int(backup_file.split('_')[2])
+                    if batch_num < resume_point:
+                        with open(backup_file, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                        previous_data.extend(data)
+                        self.logger.info(f"📁 {backup_file}: {len(data):,} veri yüklendi")
+                except:
+                    continue
+            
+            self.logger.info(f"✅ Toplam {len(previous_data):,} önceki veri kurtarıldı!")
+            return resume_point, previous_data
+            
         except:
-            return 0
+            return 0, []
             
     def print_progress_report(self):
         """Progress raporu"""
@@ -647,28 +674,39 @@ Sadece JSON yanıtı ver!"""
                 
             self.logger.info(f"Toplam {len(data)} cift yuklendi")
             
-            # Resume check
-            resume_point = self.resume_from_checkpoint()
+            # Resume check + backup recovery
+            resume_point, previous_augmented_data = self.resume_from_checkpoint()
             
             # Create batches
             batch_size = self.config['safety_settings']['batch_size']
-            batches = [data[i:i+batch_size] for i in range(0, len(data), batch_size)]
+            total_batches = [data[i:i+batch_size] for i in range(0, len(data), batch_size)]
+            total_batch_count = len(total_batches)
             
             if resume_point > 0:
-                batches = batches[resume_point:]
-                self.logger.info(f"⏩ {resume_point} batch atlandı")
+                batches = total_batches[resume_point:]
+                self.logger.info(f"⏩ {resume_point}/{total_batch_count} batch atlandı")
+            else:
+                batches = total_batches
                 
-            self.logger.info(f"{len(batches)} batch olusturuldu")
+            self.logger.info(f"{len(batches)} batch kaldı")
             
-            # Process batches
-            all_augmented_data = []
+            # Önceki verileri başlat
+            all_augmented_data = previous_augmented_data.copy()
             
-            for i, batch in enumerate(batches, start=resume_point):
-                progress = (i / len(batches)) * 100
-                self.logger.info(f"Ilerleme: %{progress:.1f} - Batch {i+1}")
+            for batch_index, batch in enumerate(batches):
+                current_batch_num = resume_point + batch_index
+                
+                # Doğru progress hesaplaması
+                progress = (current_batch_num / total_batch_count) * 100
+                self.logger.info(f"Ilerleme: %{progress:.1f} - Batch {current_batch_num+1}/{total_batch_count}")
+                
+                # %100'e ulaştığında dur
+                if current_batch_num >= total_batch_count:
+                    self.logger.info("✅ Tüm batch'ler tamamlandı!")
+                    break
                 
                 # Config change kontrolü (her 5 batch'te bir)
-                if i % 5 == 0 and self.check_config_changes():
+                if current_batch_num % 5 == 0 and self.check_config_changes():
                     self.logger.info("🔄 Config değişikliği tespit edildi, API keyleri güncelleniyor...")
                     reload_success = self.reload_config_and_apis()
                     if reload_success:
@@ -676,24 +714,25 @@ Sadece JSON yanıtı ver!"""
                     else:
                         self.logger.warning("⚠️ Config reload başarısız, eski config ile devam")
                 
-                result = await self.process_batch_ultra_safe(batch, i+1)
+                result = await self.process_batch_ultra_safe(batch, current_batch_num+1)
                 
                 if result:
                     all_augmented_data.extend(result)
                     
                 # Checkpoint
-                if i % 10 == 0:
-                    self.save_checkpoint(i, all_augmented_data)
+                if current_batch_num % 10 == 0:
+                    self.save_checkpoint(current_batch_num, all_augmented_data)
                     
-                # Auto backup
-                if i % self.config['safety_settings']['auto_backup_frequency'] == 0:
+                # Auto backup - daha sık backup (veri kaybını önle)
+                if current_batch_num % 25 == 0:
                     self.file_manager.safe_write_json(
                         all_augmented_data, 
-                        f"backups/backup_batch_{i}_{datetime.now().strftime('%H%M')}.json"
+                        f"backups/backup_batch_{current_batch_num}_{datetime.now().strftime('%H%M')}.json"
                     )
+                    self.logger.info(f"💾 Backup kaydedildi: Batch {current_batch_num}")
                     
                 # Memory cleanup ve monitoring
-                if i % 20 == 0:
+                if current_batch_num % 20 == 0:
                     gc.collect()
                     self.print_progress_report()
                     

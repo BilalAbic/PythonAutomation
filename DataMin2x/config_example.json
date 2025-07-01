@@ -1,12 +1,50 @@
 {
   "api_keys": [
-    "YOUR_GEMINI_API_KEY_1",
-    "YOUR_GEMINI_API_KEY_2",
-    "..."
+    ""
   ],
   "safety_settings": {
     "batch_size": 10,
+    "max_tokens_per_request": 20000,
     "delay_between_requests": 3,
-    "max_retries": 5
+    "max_retries": 5,
+    "duplicate_threshold": 0.85,
+    "validation_strictness": "ultra_high",
+    "auto_backup_frequency": 50,
+    "max_fails_per_hour": 8,
+    "emergency_shutdown_threshold": 25
+  },
+  "quality_controls": {
+    "medical_accuracy_check": true,
+    "turkish_grammar_validation": true,
+    "citation_preservation": true,
+    "content_length_validation": true,
+    "profanity_filter": true,
+    "duplicate_detection": true
+  },
+  "monitoring": {
+    "cost_tracking": true,
+    "performance_monitoring": true,
+    "error_analysis": true,
+    "progress_reporting": true,
+    "memory_monitoring": true
+  },
+  "augmentation_settings": {
+    "variants_per_qa": 2,
+    "augmentation_types": [
+      "paraphrase",
+      "context_variation", 
+      "detail_expansion"
+    ],
+    "preserve_medical_terminology": true,
+    "maintain_professional_tone": true,
+    "max_question_length": 200,
+    "max_answer_length": 1000
+  },
+  "file_settings": {
+    "input_file": "250630AllData.json",
+    "output_directory": "output",
+    "backup_directory": "backups",
+    "checkpoint_directory": "checkpoints",
+    "log_directory": "logs"
   }
 } 
