@@ -193,9 +193,9 @@ Lütfen sadece JSON formatında cevap ver, başka açıklama ekleme.
 
 def main():
     # Gemini API anahtarını buraya girin
-    API_KEY = "AIzaSyCtouTxAmnxmHGStK_nlRjBr_xBVpCz-L0"
+    API_KEY = ""
     
-    if API_KEY == "AIzaSyCtouTxAmnxmHGStK_nlRjBr_xBVpCz-L0":
+    if API_KEY == "":
         print("⚠️  Lütfen API anahtarınızı girin!")
         print("Google AI Studio'dan API anahtarı alabilirsiniz: https://makersuite.google.com/app/apikey")
         return
