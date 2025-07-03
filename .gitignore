@@ -96,3 +96,33 @@ Thumbs.db
 *.tmp
 *.old
 *.orig
+
+# Configuration files with sensitive data
+config.json
+*/config.json
+**/config.json
+
+# API Keys and sensitive data
+*.key
+api_keys.txt
+credentials.json
+
+# Log files
+*.log
+logs/
+**/logs/
+
+# Backup files
+backups/
+**/backups/
+backup_*.json
+
+# Output files
+output/
+**/output/
+output_json/
+**/output_json/
+
+# Checkpoints
+checkpoints/
+**/checkpoints/

@@ -1,0 +1,25 @@
+{
+  "api_keys": [
+    "YOUR_GEMINI_API_KEY_1",
+    "YOUR_GEMINI_API_KEY_2",
+    "YOUR_GEMINI_API_KEY_3",
+    "YOUR_GEMINI_API_KEY_4",
+    "YOUR_GEMINI_API_KEY_5"
+  ],
+  "model_name": "gemini-1.5-flash-latest",
+  "pdf_folder": "pdfs",
+  "output_folder": "output_json",
+  "output_filename": "toplam_egitim_veriseti.jsonl",
+  "log_filename": "data_generator.log",
+  "max_questions_per_pdf": 30,
+  "api_timeout_seconds": 600,
+  "num_workers": 2,
+  "api_rate_limit_delay_seconds": 30,
+  "api_key_rotation_delay_seconds": 60,
+  "max_retries_per_key": 3,
+  "machine_id": 0,
+  "total_machines": 3,
+  "adaptive_delay": true,
+  "min_delay_between_calls": 5,
+  "max_delay_between_calls": 30
+} 
