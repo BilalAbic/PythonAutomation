@@ -116,7 +116,7 @@ logs/
 backups/
 **/backups/
 backup_*.json
-pdfs
+
 # Output files
 output/
 **/output/
@@ -126,4 +126,3 @@ output_json/
 # Checkpoints
 checkpoints/
 **/checkpoints/
-output_json/

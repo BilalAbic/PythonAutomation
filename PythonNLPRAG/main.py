@@ -14,9 +14,12 @@ import random
 import sys
 import threading
 import time
+import gc
+import signal
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
+from datetime import datetime
 import traceback
 
 import fitz  # PyMuPDF
@@ -24,65 +27,138 @@ import google.generativeai as genai
 from google.ai.generativelanguage_v1beta.types import content
 from PIL import Image
 
+# Enhanced imports (DataMin2x style)
+try:
+    from pdf_api_manager import APIKeyManager
+except ImportError:
+    APIKeyManager = None  # Fallback to original implementation
+
 
 class PDFToQAGenerator:
     """Main class for generating Q&A datasets from PDF files."""
     
     def __init__(self, config_path: str = "config.json"):
-        """Initialize the generator with configuration."""
+        """Initialize the enhanced PDF generator with ultra-safe features."""
+        print("🛡️ Ultra Safe PDF Processor başlatılıyor...")
+        
+        # Setup basic logging first
+        self._setup_basic_logging()
+        
+        # Config yükle ve doğrula
         self.config = self._load_config(config_path)
+        
+        # Setup enhanced logging with config
         self._setup_logging()
         self._setup_output_directory()
         
-        # API key management with thread safety
-        self._current_api_key_index = 0
-        self._api_key_lock = threading.Lock()
-        self._api_call_times = []  # Track API call timing for rate limiting
+        # Enhanced safety settings
+        self.setup_safety_systems()
+        
+        # API key management - Enhanced version
+        if APIKeyManager:
+            self.api_manager = APIKeyManager(self.config['api_keys'], self.logger)
+            active_count = self.api_manager.test_all_keys()
+            if active_count == 0:
+                raise RuntimeError("❌ Hiçbir API key çalışmıyor!")
+            self.logger.info(f"✅ {active_count}/{len(self.config['api_keys'])} API key aktif")
+        else:
+            # Fallback to original implementation
+            self._current_api_key_index = 0
+            self._api_key_lock = threading.Lock()
+            self._configure_gemini()
+        
+        # Enhanced timing and rate limiting
+        self._api_call_times = []
         self._last_api_call_time = 0
-        self._current_delay = self.config.get('min_delay_between_calls', 1)
+        self._current_delay = self._get_config_value('safety_settings.min_delay_between_calls', 3)
         
         # Multi-machine support
-        self.machine_id = self.config.get('machine_id', 0)
-        self.total_machines = self.config.get('total_machines', 1)
-        
-        self._configure_gemini()
+        multi_config = self.config.get('multi_machine', {})
+        self.machine_id = multi_config.get('machine_id', 0)
+        self.total_machines = multi_config.get('total_machines', 1)
         
         # Track processed files for resume functionality
         self.processed_files = self._get_already_processed_files()
         
-        self.logger.info(f"Initialized PDF to Q&A Generator")
-        self.logger.info(f"Configuration loaded from: {config_path}")
-        self.logger.info(f"Machine ID: {self.machine_id}/{self.total_machines}")
-        self.logger.info(f"Found {len(self.processed_files)} already processed files")
-        self.logger.info(f"API rate limiting: {self.config.get('adaptive_delay', True)} (adaptive)")
-        self.logger.info(f"Available API keys: {len(self.config['api_keys'])}")
+        # Enhanced stats
+        self.stats = {
+            'total_pdfs_processed': 0,
+            'total_questions_generated': 0,
+            'successful_pages': 0,
+            'failed_pages': 0,
+            'api_failures': 0,
+            'start_time': datetime.now().isoformat()
+        }
+        
+        # Config hot reload support
+        self.config_file_path = config_path
+        self.config_last_modified = os.path.getmtime(config_path)
+        
+        self.logger.info(f"🛡️ Ultra Safe PDF Processor hazır!")
+        self.logger.info(f"📁 Configuration: {config_path}")
+        self.logger.info(f"🤖 Machine ID: {self.machine_id}/{self.total_machines}")
+        self.logger.info(f"📄 Processed files: {len(self.processed_files)}")
+        
+        if APIKeyManager:
+            self.logger.info(f"🔑 Enhanced API management: ACTIVE")
+        else:
+            self.logger.info(f"🔑 Legacy API management: {len(self.config['api_keys'])} keys")
     
+    def setup_safety_systems(self):
+        """DataMin2x tarzı güvenlik sistemleri kurulumu"""
+        # Emergency stop file
+        self.emergency_stop_file = 'EMERGENCY_STOP_PDF'
+        if os.path.exists(self.emergency_stop_file):
+            os.remove(self.emergency_stop_file)
+        
+        # Signal handlers
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
+        
+        # Directories
+        os.makedirs('checkpoints', exist_ok=True)
+        os.makedirs('logs', exist_ok=True)
+        os.makedirs('output', exist_ok=True)
+        
+        self.logger.info("🛡️ Güvenlik sistemleri kuruldu")
+        
+    def _signal_handler(self, signum, frame):
+        """Signal handler - graceful shutdown"""
+        self.logger.warning(f"Signal {signum} alındı. Güvenli shutdown...")
+        self.emergency_shutdown()
+        sys.exit(0)
+        
+    def emergency_shutdown(self):
+        """Emergency shutdown"""
+        self.logger.critical("🚨 EMERGENCY SHUTDOWN!")
+        
+        # Save emergency data
+        emergency_data = {
+            "shutdown_time": datetime.now().isoformat(),
+            "stats": getattr(self, 'stats', {}),
+            "processed_files": list(getattr(self, 'processed_files', set())),
+            "reason": "Emergency shutdown"
+        }
+        
+        try:
+            with open('emergency_shutdown_pdf.json', 'w', encoding='utf-8') as f:
+                json.dump(emergency_data, f, ensure_ascii=False, indent=2)
+        except:
+            pass
+
     def _load_config(self, config_path: str) -> Dict:
-        """Load configuration from JSON file."""
+        """Enhanced configuration loading with validation."""
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
             
-            # Validate required keys
-            required_keys = [
-                'api_keys', 'model_name', 'pdf_folder', 'output_folder',
-                'output_filename', 'log_filename', 'max_questions_per_pdf',
-                'api_timeout_seconds', 'num_workers'
-            ]
-            
-            for key in required_keys:
-                if key not in config:
-                    raise ValueError(f"Missing required configuration key: {key}")
-            
-            # Set default values for optional new parameters
-            config.setdefault('api_rate_limit_delay', 2)
-            config.setdefault('api_key_rotation_delay', 5)
-            config.setdefault('max_retries_per_key', 2)
-            config.setdefault('machine_id', 0)
-            config.setdefault('total_machines', 1)
-            config.setdefault('adaptive_delay', True)
-            config.setdefault('min_delay_between_calls', 1)
-            config.setdefault('max_delay_between_calls', 10)
+            # Enhanced config structure support
+            if 'pdf_processing' in config:
+                # New enhanced config format
+                self._validate_enhanced_config(config)
+            else:
+                # Legacy config format - convert to new format
+                config = self._convert_legacy_config(config)
             
             return config
             
@@ -90,27 +166,141 @@ class PDFToQAGenerator:
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in configuration file: {e}")
+            
+    def _validate_enhanced_config(self, config: Dict):
+        """Enhanced config validation"""
+        required_sections = ['api_keys', 'pdf_processing', 'safety_settings']
+        
+        for section in required_sections:
+            if section not in config:
+                raise ValueError(f"Missing required config section: {section}")
+        
+        # API keys validation
+        if not config['api_keys'] or len(config['api_keys']) == 0:
+            raise ValueError("En az 1 API key gerekli")
+            
+        # PDF processing validation
+        pdf_config = config['pdf_processing']
+        required_pdf_keys = ['pdf_folder', 'output_folder', 'output_filename']
+        for key in required_pdf_keys:
+            if key not in pdf_config:
+                raise ValueError(f"Missing required PDF config: {key}")
+                
+    def _convert_legacy_config(self, config: Dict) -> Dict:
+        """Legacy config'i yeni formata çevir"""
+        # Validate legacy required keys
+        required_keys = ['api_keys', 'pdf_folder', 'output_folder', 'output_filename']
+        
+        for key in required_keys:
+            if key not in config:
+                raise ValueError(f"Missing required configuration key: {key}")
+        
+        # Convert to new format
+        enhanced_config = {
+            'api_keys': config['api_keys'],
+            'safety_settings': {
+                'max_retries': config.get('max_retries_per_key', 3),
+                'min_delay_between_calls': config.get('min_delay_between_calls', 3),
+                'max_delay_between_calls': config.get('max_delay_between_calls', 15),
+                'adaptive_delay': config.get('adaptive_delay', True),
+                'max_fails_per_hour': 20,
+                'emergency_shutdown_threshold': 50,
+                'memory_usage_threshold': 85,
+                'auto_checkpoint_frequency': 10
+            },
+            'pdf_processing': {
+                'model_name': config.get('model_name', 'gemini-1.5-flash-latest'),
+                'pdf_folder': config['pdf_folder'],
+                'output_folder': config['output_folder'],
+                'output_filename': config['output_filename'],
+                'max_questions_per_pdf': config.get('max_questions_per_pdf', 15),
+                'extract_images': False,
+                'min_content_length': 100,
+                'timeout_seconds': config.get('api_timeout_seconds', 600)
+            },
+            'quality_controls': {
+                'validate_turkish': True,
+                'min_question_length': 10,
+                'min_answer_length': 20,
+                'content_filtering': True,
+                'duplicate_detection': False,
+                'confidence_threshold': 0.8
+            },
+            'monitoring': {
+                'log_filename': config.get('log_filename', 'data_generator.log'),
+                'enable_progress_reports': True,
+                'enable_performance_monitoring': True,
+                'enable_cost_tracking': True,
+                'detailed_logging': True
+            },
+            'multi_machine': {
+                'machine_id': config.get('machine_id', 0),
+                'total_machines': config.get('total_machines', 1),
+                'enable_distributed_processing': False
+            },
+            'file_settings': {
+                'output_directory': 'output',
+                'checkpoint_directory': 'checkpoints', 
+                'log_directory': 'logs',
+                'backup_directory': 'backups'
+            }
+        }
+        
+        self.logger.info("📄 Legacy config converted to enhanced format")
+        return enhanced_config
     
-    def _setup_logging(self):
-        """Setup logging to both console and file."""
-        # Create logger
-        self.logger = logging.getLogger('PDFToQAGenerator')
+    def _get_config_value(self, key_path: str, default=None):
+        """Helper method to safely get config values from enhanced format."""
+        # Handle nested keys like 'pdf_processing.output_folder'
+        keys = key_path.split('.')
+        value = self.config
+        
+        try:
+            for key in keys:
+                value = value[key]
+            return value
+        except (KeyError, TypeError):
+            return default
+    
+    def _setup_basic_logging(self):
+        """Setup basic logging for initialization phase."""
+        self.logger = logging.getLogger('UltraSafePDFProcessor')
         self.logger.setLevel(logging.INFO)
         
         # Clear any existing handlers
         for handler in self.logger.handlers[:]:
             self.logger.removeHandler(handler)
         
+        # Basic console handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(formatter)
+        self.logger.addHandler(console_handler)
+    
+    def _setup_logging(self):
+        """Enhanced logging setup with better organization."""
+        # Create logs directory
+        os.makedirs('logs', exist_ok=True)
+        
+        # Clear existing handlers (basic logging)
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+        
+        # Logger already exists from basic setup
+        self.logger.setLevel(logging.INFO)
+        
         # Create formatters
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
         
-        # File handler
-        file_handler = logging.FileHandler(
-            self.config['log_filename'], 
-            encoding='utf-8'
-        )
+        # File handler - enhanced path
+        log_filename = self._get_config_value('monitoring.log_filename', 'data_generator.log')
+        if not log_filename.startswith('logs/'):
+            log_filename = f"logs/{log_filename}"
+            
+        file_handler = logging.FileHandler(log_filename, encoding='utf-8')
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         
@@ -122,10 +312,20 @@ class PDFToQAGenerator:
         # Add handlers to logger
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
+        
+        # Also create a timestamped log file for this session
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+        timestamped_handler = logging.FileHandler(
+            f"logs/pdf_processor_{timestamp}.log", 
+            encoding='utf-8'
+        )
+        timestamped_handler.setLevel(logging.DEBUG)
+        timestamped_handler.setFormatter(formatter)
+        self.logger.addHandler(timestamped_handler)
     
     def _setup_output_directory(self):
         """Create output directory if it doesn't exist."""
-        output_dir = Path(self.config['output_folder'])
+        output_dir = Path(self._get_config_value('pdf_processing.output_folder', 'output_json'))
         output_dir.mkdir(exist_ok=True)
         self.logger.info(f"Output directory ready: {output_dir}")
     
@@ -138,39 +338,13 @@ class PDFToQAGenerator:
         self.logger.info(f"Configured Gemini API with key index: {self._current_api_key_index}")
     
     def _get_already_processed_files(self) -> Set[str]:
-        """Get list of already processed PDF files from existing output file."""
-        output_path = Path(self.config['output_folder']) / self.config['output_filename']
+        """Since we removed source information from output, we'll process all files each time."""
+        # Note: Without source information in the output, we cannot track which files were processed
+        # This means all files will be reprocessed each time the script runs
+        # Consider using a separate tracking file if you need to resume processing
         processed_files = set()
-        
-        if not output_path.exists():
-            return processed_files
-        
-        try:
-            with open(output_path, 'r', encoding='utf-8') as f:
-                for line_num, line in enumerate(f, 1):
-                    line = line.strip()
-                    if not line:
-                        continue
-                    
-                    try:
-                        qa_data = json.loads(line)
-                        if 'kaynak' in qa_data:
-                            processed_files.add(qa_data['kaynak'])
-                    except json.JSONDecodeError as e:
-                        self.logger.warning(f"Skipping invalid JSON on line {line_num}: {e}")
-                        continue
-            
-            # Get unique filenames
-            unique_files = set()
-            for filename in processed_files:
-                unique_files.add(filename)
-            
-            self.logger.info(f"Found {len(unique_files)} unique processed files")
-            return unique_files
-            
-        except Exception as e:
-            self.logger.error(f"Error reading existing output file: {e}")
-            return set()
+        self.logger.info(f"Resume functionality disabled - no source tracking in output format")
+        return processed_files
     
     def _rotate_api_key(self) -> bool:
         """Rotate to the next API key with thread safety. Returns True if successful, False if no more keys."""
@@ -186,7 +360,7 @@ class PDFToQAGenerator:
                 self.logger.info(f"Rotated to API key index: {self._current_api_key_index}")
                 
                 # Add delay after key rotation to avoid immediate rate limiting
-                delay = self.config.get('api_key_rotation_delay', 5)
+                delay = self._get_config_value('safety_settings.api_key_rotation_delay', 5)
                 self.logger.info(f"Waiting {delay}s after API key rotation...")
                 time.sleep(delay)
                 
@@ -205,15 +379,15 @@ class PDFToQAGenerator:
         # Check if we're making too many calls
         calls_per_minute = len(self._api_call_times)
         
-        if self.config.get('adaptive_delay', True):
+        if self._get_config_value('safety_settings.adaptive_delay', True):
             # Adaptive delay based on recent call frequency
             if calls_per_minute > 50:  # High frequency
-                self._current_delay = min(self._current_delay * 1.5, self.config['max_delay_between_calls'])
+                self._current_delay = min(self._current_delay * 1.5, self._get_config_value('safety_settings.max_delay_between_calls', 15))
             elif calls_per_minute < 20:  # Low frequency
-                self._current_delay = max(self._current_delay * 0.8, self.config['min_delay_between_calls'])
+                self._current_delay = max(self._current_delay * 0.8, self._get_config_value('safety_settings.min_delay_between_calls', 3))
         else:
             # Fixed delay
-            self._current_delay = self.config.get('api_rate_limit_delay', 2)
+            self._current_delay = self._get_config_value('safety_settings.api_rate_limit_delay', 2)
         
         # Ensure minimum time between calls
         time_since_last_call = current_time - self._last_api_call_time
@@ -299,32 +473,68 @@ class PDFToQAGenerator:
     
     def _create_prompt(self) -> str:
         """Create the prompt for Gemini API."""
-        max_questions = self.config['max_questions_per_pdf']
+        max_questions = self._get_config_value('pdf_processing.max_questions_per_pdf', 15)
         
         prompt = f"""
-Sen, büyük dil modellerini eğitmek için veri seti hazırlayan uzman bir veri analisti ve eğitim tasarımcısısın.
-Görevin, sana sunulan PDF dokümanının içeriğini (metin, tablolar ve görseller dahil) derinlemesine analiz ederek, yüksek kaliteli ve çeşitli Soru-Cevap (S-C) çiftleri oluşturmaktır.
+Sen, büyük dil modellerini eğitmek için ULTRA KALİTELİ veri seti hazırlayan uzman bir tıbbi beslenme ve sağlık veri analisti uzmanısın.
+Görevin, sana sunulan PDF dokümanının içeriğini (metin, tablolar ve görseller dahil) derinlemesine analiz ederek, LLM eğitimi için PROFESYONEL SEVİYEDE, yüksek kaliteli ve çeşitli Soru-Cevap çiftleri oluşturmaktır.
 
-**TEMEL GÖREV:**
-Kaliteyi niceliğe tercih et. Bu belgenin içeriğinin desteklediği kadar S-C çifti üret. Eğer bir konu hakkında yeterli bilgi yoksa, o konuda zorla soru üretme. Amacımız, tekrar eden veya düşük değerli sorular olmadan, zengin ve çeşitli bir veri seti oluşturmaktır.
+**ULTRA KALİTE STANDARTLARI:**
+Bu veri seti Harvard, WHO, ADA gibi prestijli kurumların standartlarında olmalı. Her soru-cevap çifti eğitim değeri taşımalı ve gerçek sağlık profesyonelleri tarafından kullanılabilir olmalı.
 
-**ÖNEMLİ SINIRLAMA:**
-Ne kadar üretken olursan ol, üreteceğin S-C çifti sayısı **KESİNLİKLE {max_questions} sayısını aşmamalıdır.**
+**SORU ÇEŞİTLERİ VE KALİTE SEVİYELERİ:**
+
+1. **SPESİFİK BİLGİ SORULARI** (En yüksek öncelik):
+   - "WHO'nun günlük tuz tüketimi için önerdiği limit nedir?"
+   - "Harvard Sağlıklı Yemek Tabağı modeli nasıl bir öğün dağılımı önerir?"
+   - "Diyabet hastalarında HbA1c hedef değerleri nelerdir?"
+
+2. **KLİNİK SENARYO SORULARI** (Ultra kaliteli):
+   - "45 yaşında tip 2 diyabetli, BMI 32 olan bir hastaya nasıl beslenme önerileri verirsiniz?"
+   - "Gebelikte gestasyonel diyabet gelişen 28 yaşındaki hastaya hangi diyet yaklaşımı uygulanır?"
+   - "Kronik böbrek yetmezliği olan hastada protein kısıtlaması nasıl yapılır?"
+
+3. **KOMPARATİF ANALİZ SORULARI**:
+   - "Akdeniz diyeti ile DASH diyeti arasındaki temel farklar nelerdir?"
+   - "Ketojenik diyet ile düşük karbonhidratlı diyet arasındaki farklar nelerdir?"
+
+4. **FİZYOPATOLOJİK MEKANIZMA SORULARI**:
+   - "İnsülin direncinin gelişim mekanizması nedir?"
+   - "Omega-3 yağ asitlerinin kardiyovasküler sistem üzerindeki etki mekanizmaları nelerdir?"
+
+**CEVAP KALİTE KURALLARI (ULTRA STANDART):**
+1. **DETAYLILIK**: Cevaplar minimum 4-6 cümle, ideal olarak 150-300 kelime arası
+2. **BİLİMSEL DOĞRULUK**: Sadece kanıtlanmış, bilimsel bilgiler
+3. **PRATİK UYGULANABILIRLIK**: Her cevap gerçek hayatta uygulanabilir olmalı
+4. **PROFESYONEL DİL**: Tıbbi terminoloji doğru kullanılmalı ama anlaşılır olmalı
+5. **KAPSAMLILIK**: Sebep-sonuç ilişkileri, mekanizmalar, öneriler dahil edilmeli
+6. **GÜNCEL BILGI**: En son kılavuzlar ve öneriler referans alınmalı
+
+**YASAK KURALLAR (KESİN):**
+- Tablo, şekil, grafik numaralarına referans verme
+- "Yukarıdaki tabloda", "Aşağıdaki şekilde" ifadeleri yasak
+- Kısa, eksik cevaplar (100 kelimeden az) yasak
+- Belirsiz ifadeler ("genellikle", "çoğunlukla" gibi) minimal kullan
+- Genel geçer cevaplar yasak - spesifik ve detaylı ol
+
+**ÖRNEK ULTRA KALİTE SORU-CEVAP:**
+Soru: "Tip 2 diyabetli hastalarda karbonhidrat sayımı yönteminin avantajları nelerdir?"
+Cevap: "Karbonhidrat sayımı yöntemi, tip 2 diyabetli hastalara kan glukoz seviyelerini daha iyi kontrol etme imkanı sağlar. Bu yöntemde hastalar tükettikleri karbonhidrat miktarına göre insülin dozunu ayarlayabilirler. Sistemin temel avantajları arasında; esnek yemek planlaması, daha iyi glisemik kontrol (HbA1c değerlerinde %0.5-1 azalma), yaşam kalitesinde artış ve hipoglisemi riskinde azalma yer alır. Yöntem özellikle çoklu insülin enjeksiyonu kullanan hastalarda etkilidir ve karbonhidrat/insülin oranı belirlenerek kişiselleştirilerek uygulanır."
 
 **ÇIKTI KURALLARI:**
-1.  Çıktın, bir JSON listesi (array of objects) formatında olmalıdır. Başka hiçbir metin veya açıklama ekleme.
-2.  Her bir JSON nesnesi şu şemaya sahip olmalıdır: `{{"kategori": "...", "soru": "...", "cevap": "..."}}`
-3.  Cevaplar, yalnızca sağlanan PDF içeriğine dayanmalıdır.
+1. Sadece JSON array formatı: `[{{"soru": "...", "cevap": "..."}}, ...]`
+2. Her cevap yukarıdaki kalite standardında olmalı
+3. En fazla {max_questions} soru-cevap çifti üret
+4. Kalite her şeyden önemli - az ama mükemmel üret
 
-**ÜRETİLECEK SORU KATEGORİLERİ:**
-Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, Çıkarımsal/Analitik.
+Bu standartlarda veri üret. Hedef: Tıp fakültesi öğrencilerinin ve sağlık profesyonellerinin kullanabileceği seviyede kalite.
 """
         return prompt.strip()
     
     def _call_gemini_api(self, text_content: str, images: List[bytes], max_retries: int = None) -> Optional[List[Dict]]:
         """Call Gemini API with text and images, with enhanced retry logic and API key rotation."""
         if max_retries is None:
-            max_retries = self.config.get('max_retries_per_key', 2) * len(self.config['api_keys'])
+            max_retries = self._get_config_value('safety_settings.max_retries_per_key', 2) * len(self.config['api_keys'])
         
         prompt = self._create_prompt()
         
@@ -334,7 +544,7 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
                 self._adaptive_rate_limit()
                 
                 # Initialize model
-                model = genai.GenerativeModel(self.config['model_name'])
+                model = genai.GenerativeModel(self._get_config_value('pdf_processing.model_name', 'gemini-1.5-flash-latest'))
                 
                 # Prepare content
                 content_parts = [prompt, text_content]
@@ -361,7 +571,7 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
                         max_output_tokens=8192,
                         temperature=0.1,
                     ),
-                    request_options={'timeout': self.config['api_timeout_seconds']}
+                    request_options={'timeout': self._get_config_value('pdf_processing.api_timeout_seconds', 600)}
                 )
                 
                 if not response.text:
@@ -385,19 +595,70 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
                         self.logger.warning("Response is not a JSON array")
                         continue
                     
-                    # Validate each Q&A pair
+                    # Validate each Q&A pair with quality checks
                     valid_pairs = []
                     for qa in qa_pairs:
-                        if isinstance(qa, dict) and all(key in qa for key in ['kategori', 'soru', 'cevap']):
+                        if isinstance(qa, dict) and all(key in qa for key in ['soru', 'cevap']):
+                            # Ultra quality checks
+                            question = qa['soru'].strip()
+                            answer = qa['cevap'].strip()
+                            
+                            # Check for ultra quality minimum length standards
+                            if len(question) < 15 or len(answer) < 100:
+                                self.logger.warning(f"Skipping low quality Q&A: Question too short ({len(question)} chars) or answer too brief ({len(answer)} chars)")
+                                continue
+                                
+                            # Check for forbidden table/figure references
+                            forbidden_patterns = [
+                                'tablo', 'şekil', 'grafik', 'çizelge', 'resim',
+                                'yukarıdaki', 'aşağıdaki', 'tabloda', 'şekilde', 
+                                'grafikte', 'görselde', 'fotoğrafta'
+                            ]
+                            
+                            answer_lower = answer.lower()
+                            question_lower = question.lower()
+                            
+                            # Check for table/figure references in Turkish
+                            has_forbidden = False
+                            for pattern in forbidden_patterns:
+                                if pattern in answer_lower or pattern in question_lower:
+                                    # Allow some exceptions like "şekillenmesi", "tablolama" etc.
+                                    if not any(exception in answer_lower for exception in ['şekillenmesi', 'şekillenir', 'tablolama']):
+                                        has_forbidden = True
+                                        break
+                            
+                            # Check for numbered references like "Tablo 3.1", "Şekil 2"
+                            import re
+                            if re.search(r'(tablo|şekil|grafik|çizelge)\s*\d+', answer_lower) or \
+                               re.search(r'(tablo|şekil|grafik|çizelge)\s*\d+', question_lower):
+                                has_forbidden = True
+                            
+                            if has_forbidden:
+                                self.logger.warning(f"Skipping Q&A with table/figure reference")
+                                continue
+                            
+                            # Check for ultra quality word count (professional level)
+                            word_count = len(answer.split())
+                            if word_count < 25:
+                                self.logger.warning(f"Skipping Q&A with too brief answer ({word_count} words) - need minimum 25 words for ultra quality")
+                                continue
+                            
+                            # Check for too generic or vague language
+                            vague_patterns = ['genellikle', 'çoğunlukla', 'bazen', 'muhtemelen', 'sanırım']
+                            vague_count = sum(1 for pattern in vague_patterns if pattern in answer.lower())
+                            if vague_count > 2:
+                                self.logger.warning(f"Skipping Q&A with too much vague language ({vague_count} vague words)")
+                                continue
+                            
                             valid_pairs.append(qa)
                         else:
                             self.logger.warning(f"Invalid Q&A pair format: {qa}")
                     
                     if valid_pairs:
-                        self.logger.info(f"Generated {len(valid_pairs)} valid Q&A pairs")
+                        self.logger.info(f"Generated {len(valid_pairs)} valid Q&A pairs (filtered for quality)")
                         return valid_pairs
                     else:
-                        self.logger.warning("No valid Q&A pairs found in response")
+                        self.logger.warning("No valid Q&A pairs found in response after quality filtering")
                         continue
                 
                 except json.JSONDecodeError as e:
@@ -505,7 +766,7 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
                 
                 # Add delay between chunks to respect rate limits
                 if chunk_idx < len(text_chunks) - 1:  # Don't delay after last chunk
-                    chunk_delay = max(3, self.config.get('min_delay_between_calls', 5))
+                    chunk_delay = max(3, self._get_config_value('safety_settings.min_delay_between_calls', 5))
                     self.logger.info(f"Waiting {chunk_delay}s before next chunk...")
                     time.sleep(chunk_delay)
             
@@ -513,13 +774,14 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
                 self.logger.error(f"Failed to generate any Q&A pairs for {pdf_path.name}")
                 return False
             
-            # Add source information and save to output file
-            output_path = Path(self.config['output_folder']) / self.config['output_filename']
+            # Save to output file without source information
+            output_path = Path(self._get_config_value('pdf_processing.output_folder', 'output_json')) / self._get_config_value('pdf_processing.output_filename', 'toplam_egitim_veriseti.jsonl')
             
             with open(output_path, 'a', encoding='utf-8') as f:
                 for qa in all_qa_pairs:
-                    qa['kaynak'] = pdf_path.name
-                    f.write(json.dumps(qa, ensure_ascii=False) + '\n')
+                    # Remove source information from output - only keep soru and cevap
+                    clean_qa = {'soru': qa['soru'], 'cevap': qa['cevap']}
+                    f.write(json.dumps(clean_qa, ensure_ascii=False) + '\n')
             
             self.logger.info(f"Successfully processed {pdf_path.name}: {len(all_qa_pairs)} total Q&A pairs generated from {len(text_chunks)} chunks")
             return True
@@ -531,7 +793,7 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
     
     def _get_pdf_files(self) -> List[Path]:
         """Get list of PDF files to process with multi-machine support."""
-        pdf_folder = Path(self.config['pdf_folder'])
+        pdf_folder = Path(self._get_config_value('pdf_processing.pdf_folder', 'pdfs'))
         
         if not pdf_folder.exists():
             raise FileNotFoundError(f"PDF folder not found: {pdf_folder}")
@@ -580,7 +842,7 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
             successful_count = 0
             failed_count = 0
             
-            with ThreadPoolExecutor(max_workers=self.config['num_workers']) as executor:
+            with ThreadPoolExecutor(max_workers=self._get_config_value('pdf_processing.num_workers', 1)) as executor:
                 # Submit all tasks
                 future_to_pdf = {
                     executor.submit(self._process_single_pdf, pdf_path): pdf_path 
@@ -608,7 +870,7 @@ Gerçeklere Dayalı, Tablo/Görsel Odaklı, Özetleyici, Karşılaştırmalı, �
             self.logger.info(f"Failed: {failed_count}")
             
             if successful_count > 0:
-                output_path = Path(self.config['output_folder']) / self.config['output_filename']
+                output_path = Path(self._get_config_value('pdf_processing.output_folder', 'output_json')) / self._get_config_value('pdf_processing.output_filename', 'toplam_egitim_veriseti.jsonl')
                 self.logger.info(f"Output saved to: {output_path}")
             
         except Exception as e:
