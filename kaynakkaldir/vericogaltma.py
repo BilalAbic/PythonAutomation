@@ -5,16 +5,19 @@ import time
 import asyncio
 from tqdm.asyncio import tqdm_asyncio # Eş zamanlı işlemler için tqdm
 
-# --- Konfigürasyon Alanı ---
-# 1. Adım: Google AI Studio'dan aldığınız API anahtarlarınızı bir liste olarak buraya yapıştırın.
-# Birden fazla anahtar ekleyerek işlem hızını artırabilir ve limitlere takılma riskini azaltabilirsiniz.
-API_KEYS = [
-         "AIzaSyCtouTxAmnxmHGStK_nlRjBr_xBVpCz-L0",
-        "AIzaSyAYMdnve8dgd0p4phXisn1elvwJdZMDny0",
-        "AIzaSyDSo5xPkuhlAZUSEEeABOKoLL1ANVLGFEs",
-        "AIzaSyCkrD3IeuudDVAaRRm434gHL9K12fmj-Yw",
-        "AIzaSyCBv61VQSQUa7EVXGB9ttq9Xv-B4059JW0"
-]
+def load_api_keys():
+    """Config dosyasından API anahtarlarını yükle"""
+    config_path = "config.json"
+    if os.path.exists(config_path):
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            return config.get('api_keys', [])
+    else:
+        print("⚠️ config.json bulunamadı! config_example.json'dan kopyalayın.")
+        return []
+
+# API keyleri config'den yükle
+API_KEYS = load_api_keys()
 
 INPUT_FILE = "train.json"
 OUTPUT_FILE = "train_augmented.json"
