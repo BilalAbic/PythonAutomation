@@ -1,328 +1,256 @@
-# PythonNLPRAG - Gelişmiş PDF İşleme ve Soru-Cevap Üretimi Sistemi
+# 🤖 Advanced PDF to ML Training Dataset Generator
 
-Bu modül, profesyonel düzeyde PDF'den soru-cevap dataset üretimi için gelişmiş özellikler sunan production-ready bir sistemdir. Çoklu makine desteği, adaptif rate limiting ve güçlü API anahtar yönetimi ile donatılmıştır.
+Bu proje, PDF dosyalarından makine öğrenmesi modelleri için **yüksek kaliteli eğitim verisi** üretmek için geliştirilmiş gelişmiş bir sistemdir. GPT-4, Claude, Gemini gibi büyük dil modellerinin eğitiminde kullanılabilir seviyede soru-cevap çiftleri oluşturur.
 
-## 🔐 GÜVENLİK VE KURULUM ÖNCESİ ÖNEMLİ NOTLAR
+## 🚀 Özellikler
 
-### ⚠️ API Anahtarı Güvenliği
-**MUTLAKA OKUMANIZ GEREKEN GÜVENLİK BİLGİLERİ:**
+### ✨ Gelişmiş Özellikler
+- **🎯 ML-Optimized**: Model eğitimi için özel olarak tasarlanmış
+- **📊 Kalite Kontrolü**: Otomatik kalite skorlaması ve filtreleme
+- **🏷️ Kategori Çeşitliliği**: 5 farklı soru kategorisi (Faktuel, Kavramsal, Analitik, Uygulama, Eleştirel)
+- **📈 Zorluk Seviyeleri**: Temel, Orta, İleri seviyelerinde dengeli dağılım
+- **🔍 Anahtar Kelime Çıkarımı**: Her soru için otomatik anahtar kelime üretimi
+- **📝 Metadata Zenginleştirme**: ML eğitimi için gerekli metadata'lar
 
-1. **API anahtarlarınızı asla Git'e commit etmeyin**
-2. **`config_example.json`'dan `config.json` oluşturun**
-3. **Gerçek API anahtarlarınızı sadece `config.json`'a yazın**
+### 🛡️ Güvenlik ve Stabilite
+- **🔄 API Key Rotation**: Çoklu API key desteği ve otomatik rotasyon
+- **⏱️ Rate Limiting**: Akıllı rate limiting ve quota yönetimi
+- **🚨 Emergency Stop**: Acil durum durdurma sistemi
+- **💾 Checkpoint**: Süreç devam ettirme özelliği
+- **📊 Monitoring**: Gerçek zamanlı performans izleme
 
-### 🛠️ Güvenli Kurulum Adımları
+### 📊 Veri Kalitesi
+- **🎯 Kalite Skoru**: Her soru-cevap çifti için 0-100 arası kalite skoru
+- **🚫 Filtre Sistemi**: Yasak referansları, belirsiz dili otomatik tespit
+- **📏 Uzunluk Kontrolü**: Optimal soru-cevap uzunluğu garantisi
+- **🔍 Duplikasyon Kontrolü**: Tekrar eden soruları engelleme
 
-#### 1. Config Dosyası Oluşturun
-```powershell
-# Bu klasörde (PythonNLPRAG):
-copy config_example.json config.json
+## 📦 Kurulum
+
+### Gereksinimler
+```bash
+pip install -r requirements.txt
 ```
 
-#### 2. API Anahtarları Ekleyin
-`config.json` dosyasını açın ve placeholder'ları değiştirin:
+### API Key Kurulumu
+1. `config_example.json`'ı `config.json` olarak kopyalayın
+2. Gemini API key'lerinizi ekleyin:
 ```json
 {
   "api_keys": [
-    "AIzaSyYour_Real_API_Key_Here_1",
-    "AIzaSyYour_Real_API_Key_Here_2",
-    "AIzaSyYour_Real_API_Key_Here_3"
+    "YOUR_GEMINI_API_KEY_1",
+    "YOUR_GEMINI_API_KEY_2"
   ]
 }
 ```
 
-#### 3. API Anahtarını Alın
-- [Google AI Studio](https://aistudio.google.com/app/apikey) adresine gidin
-- Yeni API anahtarları oluşturun
-- **Bu anahtarları güvenli şekilde saklayın**
+## 🎯 Kullanım
 
-## 🚀 Modül Özellikleri
+### 1. Temel Kullanım
+```bash
+# Ana script ile çalıştırma
+python main.py --config config.json
 
-- **Production-Ready Mimari**: Endüstriyel seviye kod kalitesi
-- **Çoklu Makine Desteği**: Dağıtık işleme için multi-machine support
-- **Adaptif Rate Limiting**: Akıllı API çağrı yönetimi
-- **Güçlü API Yönetimi**: Otomatik anahtar rotasyonu ve failover
-- **Resume Functionality**: Kesintiye uğrayan işlemleri kaldığı yerden devam ettirme
-- **Detaylı Logging**: Kapsamlı hata takibi ve performans izleme
-- **Yapılandırılabilir Çıktı**: Esnek dataset formatları
-- **Gelişmiş API Manager**: Hot-swap API key desteği
-
-## 📋 Gereksinimler
-
-- **Python 3.8+** (Önerilen)
-- **Google Gemini API Anahtarı** (Çoklu anahtar desteklenir)
-- **Yeterli RAM** (Büyük PDF'ler için 4GB+)
-- **Kararlı İnternet Bağlantısı**
-
-### Python Paketleri:
-```
-google-generativeai
-PyMuPDF
-Pillow
+# Enhanced processor ile çalıştırma  
+python enhanced_pdf_processor.py
 ```
 
-## ⚙️ Kurulum
-
-### 1. Gerekli Paketleri Yükleyin
-```powershell
-pip install -r requirements.txt
-```
-
-### 2. Güvenli Konfigürasyon
-```powershell
-# Config dosyası oluşturun
-copy config_example.json config.json
-
-# config.json'ı düzenleyip gerçek API anahtarlarınızı ekleyin
-```
-
-### 3. Konfigürasyon Ayarları
-`config.json` dosyasında ayarlayın:
-
-```json
-{
-  "api_keys": [
-    "YOUR_GEMINI_API_KEY_1",
-    "YOUR_GEMINI_API_KEY_2", 
-    "YOUR_GEMINI_API_KEY_3"
-  ],
-  "model_name": "gemini-1.5-flash-latest",
-  "pdf_folder": "pdfs",
-  "output_folder": "output_json",
-  "output_filename": "toplam_egitim_veriseti.jsonl",
-  "max_questions_per_pdf": 30,
-  "num_workers": 2,
-  "machine_id": 0,
-  "total_machines": 1,
-  "adaptive_delay": true,
-  "min_delay_between_calls": 5,
-  "max_delay_between_calls": 30
-}
-```
-
-## 📁 Dosya Yapısı ve İşlevleri
-
-### Ana İşleme Motoru
-
-#### 1. `main.py` - Production-Ready İşleme Sistemi
-**Ne yapar:**
-- PDF dosyalarını sayfa sayfa işler
-- Gemini AI ile soru-cevap üretir
-- Adaptif rate limiting uygular
-- Çoklu API anahtar yönetimi
-- Hata toleransı ve recovery
-- Thread-safe işlemler
-
-**Güvenli çalıştırma:**
-```powershell
-# Önce config.json oluşturun ve API anahtarlarını ekleyin
-copy config_example.json config.json
-
-# Sonra çalıştırın
-python main.py
-```
-
-#### 2. `enhanced_pdf_processor.py` - Gelişmiş PDF İşleyici
-**Ne yapar:**
-- Gelişmiş görsel işleme
-- Multi-modal AI entegrasyonu
-- Zengin metadata çıktısı
-- Config hot-reload desteği
-
-#### 3. `pdf_api_manager.py` - Gelişmiş API Yönetimi
-**Ne yapar:**
-- API anahtarlarını test eder
-- Otomatik failover
-- Hot-swap API key desteği
-- Performans izleme
-
-**Özellikler:**
-- 🔄 **Hot Reload**: API anahtarları çalışma sırasında eklenebilir
-- 🧪 **Auto Test**: Yeni anahtarlar otomatik test edilir
-- 📊 **Live Monitoring**: Aktif anahtar sayısı takibi
-- ⚡ **Instant Update**: Sistem durmuyor
-
-#### 4. `add_api_key_pdf.py` - Canlı API Key Yönetimi
-**Ne yapar:**
-- Sistem çalışırken API anahtarı ekleme
-- Otomatik test ve doğrulama
-- Config dosyası güncelleme
-
-**Kullanım:**
-```powershell
-# Ana sistem çalışırken başka bir terminal açın:
-python add_api_key_pdf.py
-```
-
-### Konfigürasyon Yönetimi
-
-#### 5. `config_example.json` - Güvenli Config Şablonu
-**İçeriği:**
-```json
-{
-  "api_keys": [
-    "YOUR_GEMINI_API_KEY_1",
-    "YOUR_GEMINI_API_KEY_2",
-    "YOUR_GEMINI_API_KEY_3"
-  ],
-  // diğer ayarlar placeholder olarak
-}
-```
-
-**Önemli:** Bu dosya Git'e commit edilir ama gerçek API anahtarları içermez.
-
-#### 6. `config.json` - Gerçek Konfigürasyon
-**Önemli:** Bu dosya `.gitignore` ile Git'ten hariç tutulmuştur.
-
-## 🚀 Kullanım Senaryoları
-
-### Scenario 1: İlk Kez Güvenli Kullanım
-```powershell
-# 1. Config dosyası oluşturun
-copy config_example.json config.json
-
-# 2. API anahtarlarınızı config.json'a ekleyin
-# config.json dosyasını açın ve YOUR_GEMINI_API_KEY_X kısımlarını değiştirin
-
-# 3. PDF'leri yerleştirin
+### 2. PDF'leri Hazırlama
+```bash
+# pdfs/ klasörüne PDF dosyalarınızı yerleştirin
 mkdir pdfs
-# PDF dosyalarınızı pdfs/ klasörüne kopyalayın
-
-# 4. İşlemi başlatın
-python main.py
+cp *.pdf pdfs/
 ```
 
-### Scenario 2: Çoklu Makine Dağıtık İşleme
-**Makine 1 (config.json):**
+### 3. Veri Kalitesi Analizi
+```bash
+# Üretilen veriyi analiz etme
+python data_quality_analyzer.py --data-file output_json/toplam_egitim_veriseti.jsonl
+```
+
+## 📊 Çıktı Formatı
+
+### ML Training Format
 ```json
 {
-  "machine_id": 0,
-  "total_machines": 3,
-  "api_keys": ["key1", "key2"]
+  "soru": "Makine öğrenmesinde overfitting nasıl önlenir?",
+  "cevap": "Overfitting, modelin eğitim verisine aşırı uyum sağlayıp...",
+  "kategori": "Kavramsal Anlama",
+  "zorluk": "Orta", 
+  "anahtar_kelimeler": ["overfitting", "regularizasyon", "validation"],
+  "kaynak_tipi": "metin",
+  "kalite_skoru": 85,
+  "kelime_sayisi": 127,
+  "karakter_sayisi": 892,
+  "kaynak_dosya": "ml_book_chapter1",
+  "uretim_tarihi": "2024-01-15T10:30:00",
+  "model_versiyonu": "gemini-1.5-flash-latest"
 }
 ```
 
-**Makine 2 (config.json):**
+## 🎛️ Konfigürasyon
+
+### Ana Parametreler
 ```json
 {
-  "machine_id": 1,
-  "total_machines": 3,
-  "api_keys": ["key3", "key4"]
-}
-```
-
-### Scenario 3: Çalışma Sırasında API Key Ekleme
-```powershell
-# Terminal 1: Ana işlem
-python main.py
-
-# Terminal 2: Yeni API key ekle
-python add_api_key_pdf.py
-# Sistem 5 batch içinde yeni anahtarları algılayacak
-```
-
-### Scenario 4: API Test ve Doğrulama
-```powershell
-# API anahtarlarınızı test edin
-python api_test.py
-```
-
-## 📊 Çıktı Formatları
-
-### JSONL Format (ML için optimize)
-```jsonl
-{"question": "Hangi besinler protein açısından zengindir?", "answer": "Et, balık, yumurta, baklagiller...", "source": "beslenme.pdf", "page": 15, "metadata": {"confidence": 0.95, "timestamp": "2025-06-28T10:30:00Z"}}
-```
-
-### JSON Format
-```json
-[
-  {
-    "question": "Hangi besinler protein açısından zengindir?",
-    "answer": "Et, balık, yumurta, baklagiller...",
-    "source": "beslenme.pdf",
-    "page": 15,
-    "metadata": {
-      "confidence": 0.95,
-      "timestamp": "2025-06-28T10:30:00Z"
-    }
+  "pdf_processing": {
+    "max_questions_per_pdf": 25,
+    "model_name": "gemini-1.5-flash-latest"
+  },
+  "quality_control": {
+    "quality_threshold": 70,
+    "min_answer_length": 100,
+    "max_answer_length": 1600
+  },
+  "ml_training": {
+    "target_dataset_size": 1000,
+    "min_quality_score": 75
   }
-]
+}
 ```
 
-## ⚠️ Güvenlik Özellikleri
+## 📈 Kalite Metrikleri
 
-### API Anahtarı Koruması
-- ✅ `config.json` Git'ten hariç tutuldu
-- ✅ `config_example.json` sadece placeholder içerir
-- ✅ Gerçek anahtarlar sadece local'de saklanır
-- ✅ `.gitignore` kuralları eksiksiz
+### Kalite Skorlaması (0-100)
+- **Uzunluk Kontrolü** (25 puan): Optimal soru-cevap uzunluğu
+- **İçerik Kalitesi** (20 puan): Yasak referanslar, netlik
+- **Kategori Uyumu** (10 puan): Doğru kategori ataması
+- **Zorluk Uyumu** (10 puan): Uygun zorluk seviyesi
+- **Anahtar Kelime** (10 puan): Kaliteli anahtar kelimeler
+- **Dil Kalitesi** (10 puan): Belirsiz ifade kontrolü
+- **Spesifiklik** (5 puan): Spesifik içerik göstergeleri
 
-### Veri Güvenliği
-- Otomatik checkpoint sistemi
-- Resume functionality
-- Hata toleransı
-- Rate limiting koruması
+### ML Hazırlık Skoru
+- **Veri Hacmi** (20 puan): Toplam soru-cevap sayısı
+- **Kategori Çeşitliliği** (20 puan): Farklı kategori sayısı
+- **Ortalama Kalite** (25 puan): Kalite skorları ortalaması
+- **Uzunluk Dağılımı** (15 puan): İdeal uzunluk aralığında olanlar
+- **Veri Tutarlılığı** (20 puan): Hata oranı ve duplikasyon
 
-### Proje Güvenliği
-```
-# Bu dosyalar Git'e gönderilmez:
-config.json           # Gerçek API anahtarları
-logs/                 # Log dosyaları  
-output_json/          # Çıktı dosyaları
-checkpoints/          # Checkpoint dosyaları
-```
+## 📊 Analiz ve Raporlama
 
-## 🔧 Sorun Giderme
-
-### Yaygın Hatalar:
-1. **Config Not Found**: `copy config_example.json config.json` komutunu çalıştırın
-2. **API Key Error**: `config.json`'da gerçek API anahtarlarınızı kontrol edin
-3. **Permission Error**: Klasör yazma izinlerini kontrol edin
-4. **Module Not Found**: `pip install -r requirements.txt` çalıştırın
-
-### Güvenlik Kontrolleri:
-```powershell
-# Config dosyasının Git'te olmadığını kontrol edin:
-git status
-
-# config.json dosyası "Untracked files" altında görünmelidir
+### Veri Kalitesi Raporu
+```bash
+python data_quality_analyzer.py
 ```
 
-### Debug Modları:
-```powershell
-# Detaylı logging ile
-python main.py --log-level DEBUG
+Çıktılar:
+- `output/data_quality_report.txt`: İnsan-okunabilir rapor
+- `output/data_quality_analysis.json`: Detaylı analiz verileri
 
-# API test modu
-python api_test.py
+### Örnek Analiz Çıktısı
+```
+🎯 VERİ KALİTESİ ANALİZ ÖZETİ
+================================================================================
+📊 Toplam veri: 847 kayıt
+⭐ ML Hazırlık Skoru: 85/100 (85.0%)
+🏆 Değerlendirme: Good - Ready for ML training with minor improvements
+📈 Ortalama kalite: 78.5
 ```
 
-## 📈 Performans İpuçları
+## 🛡️ Güvenlik Özellikleri
 
-1. **Çoklu API Anahtarı**: Birden fazla anahtar kullanarak hızlandırın
-2. **Adaptif Delay**: Sistem otomatik olarak uygun gecikme ayarlar
-3. **Resume Feature**: Kesintilerde kaldığı yerden devam eder
-4. **Hot-Swap Keys**: Çalışma sırasında yeni anahtarlar ekleyin
+### API Key Yönetimi
+- Çoklu API key desteği
+- Otomatik key rotasyonu
+- Quota aşım tespiti
+- Health monitoring
 
-## 📝 Dosya Güvenliği
+### Hata Toleransı
+- Exponential backoff
+- Graceful shutdown
+- Emergency stop mekanizması
+- Checkpoint/resume özelliği
 
-### Git İçin Güvenli Dosyalar:
-- `README.md`
-- `requirements.txt` 
-- `config_example.json`
-- `*.py` dosyaları
+## 🔧 Gelişmiş Kullanım
 
-### Git'e Gönderilmeyen Dosyalar:
-- `config.json` (gerçek API anahtarları)
-- `logs/` (log dosyaları)
-- `output_json/` (çıktı dosyaları)
-- `checkpoints/` (checkpoint dosyaları)
+### Çoklu Makine Desteği
+```json
+{
+  "multi_machine": {
+    "machine_id": 0,
+    "total_machines": 3
+  }
+}
+```
+
+### Performance Tuning
+```json
+{
+  "pdf_processing": {
+    "num_workers": 4,
+    "api_timeout_seconds": 600
+  },
+  "safety_settings": {
+    "min_delay_between_calls": 3,
+    "adaptive_delay": true
+  }
+}
+```
+
+## 📁 Proje Yapısı
+
+```
+PythonNLPRAG/
+├── main.py                     # Ana işlem scripti
+├── enhanced_pdf_processor.py   # Gelişmiş processor
+├── pdf_api_manager.py         # API key yönetimi
+├── data_quality_analyzer.py   # Kalite analizi
+├── config_example.json        # Örnek konfig
+├── requirements.txt           # Python bağımlılıkları
+├── pdfs/                      # PDF dosyaları
+├── output_json/               # Üretilen veriler
+├── output/                    # Analiz raporları
+├── logs/                      # Log dosyaları
+└── checkpoints/               # Checkpoint dosyaları
+```
+
+## 🎯 En İyi Pratikler
+
+### Veri Kalitesi İçin
+1. **Çeşitli PDF'ler**: Farklı konularda, farklı yapılarda PDF'ler kullanın
+2. **Kalite Kontrolü**: Düzenli olarak `data_quality_analyzer.py` çalıştırın
+3. **Prompt Optimizasyonu**: Düşük kalite skorunda prompt'u iyileştirin
+4. **Kategori Dengesi**: Tüm kategorilerden yeterli örnek olduğundan emin olun
+
+### Performans İçin
+1. **API Key Sayısı**: En az 3-5 API key kullanın
+2. **Rate Limiting**: Conservative ayarlarla başlayın
+3. **Batch Processing**: Büyük PDF'leri chunk'lara bölün
+4. **Monitoring**: Log dosyalarını düzenli kontrol edin
+
+## 🐛 Sorun Giderme
+
+### Yaygın Sorunlar
+1. **API Quota Aşımı**: Daha fazla API key ekleyin
+2. **Düşük Kalite Skoru**: Prompt'u iyileştirin
+3. **Yavaş İşlem**: `num_workers` artırın
+4. **Memory Error**: Chunk size'ı küçültün
+
+### Log Kontrolü
+```bash
+tail -f logs/pdf_processor_*.log
+```
+
+## 📄 Lisans
+
+Bu proje açık kaynaklıdır ve MIT lisansı altında dağıtılmaktadır.
+
+## 🤝 Katkıda Bulunma
+
+1. Fork yapın
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Commit yapın (`git commit -m 'Add amazing feature'`)
+4. Push yapın (`git push origin feature/amazing-feature`)
+5. Pull Request açın
+
+## 📞 Destek
+
+Sorularınız için:
+- Issue açın: GitHub Issues
+- Dokümantasyon: Bu README dosyası
+- Log analizi: `logs/` klasörünü kontrol edin
 
 ---
 
-**⚠️ GÜVENLİK HATIRLATMASI**: 
-- API anahtarlarınızı asla Git'e commit etmeyin
-- Her zaman `config_example.json`'dan `config.json` oluşturun
-- Gerçek anahtarlarınızı sadece `config.json`'a yazın
-- `git status` ile config.json'ın tracked olmadığını kontrol edin
+⭐ **Bu proje ile yüksek kaliteli ML eğitim verisi üretin!** ⭐

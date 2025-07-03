@@ -55,6 +55,10 @@ class PDFToQAGenerator:
         self.setup_safety_systems()
         
         # API key management - Enhanced version
+        # Always initialize these attributes for compatibility
+        self._current_api_key_index = 0
+        self._api_key_lock = threading.Lock()
+        
         if APIKeyManager:
             self.api_manager = APIKeyManager(self.config['api_keys'], self.logger)
             active_count = self.api_manager.test_all_keys()
@@ -63,8 +67,6 @@ class PDFToQAGenerator:
             self.logger.info(f"✅ {active_count}/{len(self.config['api_keys'])} API key aktif")
         else:
             # Fallback to original implementation
-            self._current_api_key_index = 0
-            self._api_key_lock = threading.Lock()
             self._configure_gemini()
         
         # Enhanced timing and rate limiting
@@ -472,69 +474,408 @@ class PDFToQAGenerator:
             raise
     
     def _create_prompt(self) -> str:
-        """Create the prompt for Gemini API."""
-        max_questions = self._get_config_value('pdf_processing.max_questions_per_pdf', 15)
-        
+        """Create specialized prompt for dietitian and health chatbot training dataset."""
         prompt = f"""
-Sen, büyük dil modellerini eğitmek için ULTRA KALİTELİ veri seti hazırlayan uzman bir tıbbi beslenme ve sağlık veri analisti uzmanısın.
-Görevin, sana sunulan PDF dokümanının içeriğini (metin, tablolar ve görseller dahil) derinlemesine analiz ederek, LLM eğitimi için PROFESYONEL SEVİYEDE, yüksek kaliteli ve çeşitli Soru-Cevap çiftleri oluşturmaktır.
+Sana verilen metin içeriğinden, DİYETİSYEN VE SAĞLIK CHATBOT'U eğitimi için YÜKSEK KALİTELİ soru-cevap çiftleri üret.
 
-**ULTRA KALİTE STANDARTLARI:**
-Bu veri seti Harvard, WHO, ADA gibi prestijli kurumların standartlarında olmalı. Her soru-cevap çifti eğitim değeri taşımalı ve gerçek sağlık profesyonelleri tarafından kullanılabilir olmalı.
+🎯 HEDEF: Profesyonel diyetisyen chatbot'u için uzman seviye eğitim verisi
 
-**SORU ÇEŞİTLERİ VE KALİTE SEVİYELERİ:**
+📋 ÇIKTI FORMATI (SADECE BU FORMAT):
+[
+  {{"soru": "Diyetisyenlik sorusu", "cevap": "Uzman diyetisyen cevabı"}},
+  {{"soru": "Beslenme sorusu", "cevap": "Detaylı beslenme cevabı"}}
+]
 
-1. **SPESİFİK BİLGİ SORULARI** (En yüksek öncelik):
-   - "WHO'nun günlük tuz tüketimi için önerdiği limit nedir?"
-   - "Harvard Sağlıklı Yemek Tabağı modeli nasıl bir öğün dağılımı önerir?"
-   - "Diyabet hastalarında HbA1c hedef değerleri nelerdir?"
+🚫 KESINLIKLE YASAK:
+- "makalede", "metinde", "kaynaklarda", "yukarıda", "aşağıda" 
+- "belirtildiği gibi", "anlatıldığı üzere", "bahsedildiği"
+- "bu", "şu", "bunlar" ile soru başlatma
+- Tablo/şekil/grafik referansları
 
-2. **KLİNİK SENARYO SORULARI** (Ultra kaliteli):
-   - "45 yaşında tip 2 diyabetli, BMI 32 olan bir hastaya nasıl beslenme önerileri verirsiniz?"
-   - "Gebelikte gestasyonel diyabet gelişen 28 yaşındaki hastaya hangi diyet yaklaşımı uygulanır?"
-   - "Kronik böbrek yetmezliği olan hastada protein kısıtlaması nasıl yapılır?"
+✅ DİYETİSYEN CHATBOT İÇİN MÜKEMMEL SORULAR:
 
-3. **KOMPARATİF ANALİZ SORULARI**:
-   - "Akdeniz diyeti ile DASH diyeti arasındaki temel farklar nelerdir?"
-   - "Ketojenik diyet ile düşük karbonhidratlı diyet arasındaki farklar nelerdir?"
+**BESLENME BİLİMİ:**
+- "Protein gereksinimini karşılamak için hangi besinler tüketilmeli ve günlük dağılım nasıl olmalı?"
+- "Omega-3 yağ asitlerinin vücut üzerindeki etkileri nelerdir ve hangi besinlerde bulunur?"
+- "Lif tüketiminin sindirim sistemi üzerindeki faydaları nelerdir ve günlük önerilen miktar nedir?"
 
-4. **FİZYOPATOLOJİK MEKANIZMA SORULARI**:
-   - "İnsülin direncinin gelişim mekanizması nedir?"
-   - "Omega-3 yağ asitlerinin kardiyovasküler sistem üzerindeki etki mekanizmaları nelerdir?"
+**DİYET PLANLAMA:**
+- "Kilo vermek isteyen 30 yaşındaki kadın için hangi makro besin dağılımı önerilir?"
+- "Diyabetik hastalarda kan şekerini kontrol altında tutmak için hangi beslenme stratejileri uygulanır?"
+- "Spor yapan bireyler için antrenman öncesi ve sonrası beslenme nasıl planlanmalı?"
 
-**CEVAP KALİTE KURALLARI (ULTRA STANDART):**
-1. **DETAYLILIK**: Cevaplar minimum 4-6 cümle, ideal olarak 150-300 kelime arası
-2. **BİLİMSEL DOĞRULUK**: Sadece kanıtlanmış, bilimsel bilgiler
-3. **PRATİK UYGULANABILIRLIK**: Her cevap gerçek hayatta uygulanabilir olmalı
-4. **PROFESYONEL DİL**: Tıbbi terminoloji doğru kullanılmalı ama anlaşılır olmalı
-5. **KAPSAMLILIK**: Sebep-sonuç ilişkileri, mekanizmalar, öneriler dahil edilmeli
-6. **GÜNCEL BILGI**: En son kılavuzlar ve öneriler referans alınmalı
+**SAĞLIK KOŞULLARI:**
+- "Hipertansiyon hastalarında sodyum kısıtlaması nasıl uygulanır ve alternatif lezzet kaynakları nelerdir?"
+- "Çölyak hastalarında glutensiz diyet planlaması yaparken dikkat edilmesi gereken noktalar nelerdir?"
+- "Anemi tedavisinde demir emilimini artıran ve azaltan faktörler nelerdir?"
 
-**YASAK KURALLAR (KESİN):**
-- Tablo, şekil, grafik numaralarına referans verme
-- "Yukarıdaki tabloda", "Aşağıdaki şekilde" ifadeleri yasak
-- Kısa, eksik cevaplar (100 kelimeden az) yasak
-- Belirsiz ifadeler ("genellikle", "çoğunlukla" gibi) minimal kullan
-- Genel geçer cevaplar yasak - spesifik ve detaylı ol
+**BESİN DEĞERLERI:**
+- "100 gram tavuk göğsünün besin değerleri nelerdir ve hangi vitaminleri içerir?"
+- "Karbonhidrat sayımı nasıl yapılır ve diyabetik hastalar için önemi nedir?"
+- "Kalsiyum emilimini etkileyen faktörler nelerdir ve günlük ihtiyaç nasıl karşılanır?"
 
-**ÖRNEK ULTRA KALİTE SORU-CEVAP:**
-Soru: "Tip 2 diyabetli hastalarda karbonhidrat sayımı yönteminin avantajları nelerdir?"
-Cevap: "Karbonhidrat sayımı yöntemi, tip 2 diyabetli hastalara kan glukoz seviyelerini daha iyi kontrol etme imkanı sağlar. Bu yöntemde hastalar tükettikleri karbonhidrat miktarına göre insülin dozunu ayarlayabilirler. Sistemin temel avantajları arasında; esnek yemek planlaması, daha iyi glisemik kontrol (HbA1c değerlerinde %0.5-1 azalma), yaşam kalitesinde artış ve hipoglisemi riskinde azalma yer alır. Yöntem özellikle çoklu insülin enjeksiyonu kullanan hastalarda etkilidir ve karbonhidrat/insülin oranı belirlenerek kişiselleştirilerek uygulanır."
+❌ KÖTÜ ÖRNEKLER (YAPMA):
+- "Metinde bahsedilen vitaminler nelerdir?"
+- "Bu araştırmanın sonuçları nelerdir?"
+- "Yukarıdaki tabloda gösterilen besinler nelerdir?"
 
-**ÇIKTI KURALLARI:**
-1. Sadece JSON array formatı: `[{{"soru": "...", "cevap": "..."}}, ...]`
-2. Her cevap yukarıdaki kalite standardında olmalı
-3. En fazla {max_questions} soru-cevap çifti üret
-4. Kalite her şeyden önemli - az ama mükemmel üret
+🎯 SORU KATEGORİLERİ (Diyetisyen odaklı):
 
-Bu standartlarda veri üret. Hedef: Tıp fakültesi öğrencilerinin ve sağlık profesyonellerinin kullanabileceği seviyede kalite.
+1. **BESLENME BİLİMİ** (30%):
+   - Makro/mikro besinler, metabolizma
+   - "Hangi besinler", "Nasıl çalışır", "Etkisi nedir"
+   - Biyokimyasal süreçler ve besin emilimi
+
+2. **DİYET PLANLAMA** (25%):
+   - Kişiselleştirilmiş beslenme önerileri
+   - "Nasıl planlanır", "Önerilen miktar", "Dağılım"
+   - Yaş/cinsiyet/aktivite seviyesine göre planlama
+
+3. **SAĞLIK KOŞULLARI** (25%):
+   - Hastalık durumlarında beslenme
+   - "Hangi hastalıklarda", "Nasıl etkilenir", "Öneriler"
+   - Terapötik beslenme uygulamaları
+
+4. **PRATİK UYGULAMA** (20%):
+   - Günlük yaşamda beslenme ipuçları
+   - "Nasıl uygulanır", "Alternatifler", "Püf noktalar"
+   - Yemek hazırlama ve saklama
+
+📝 DİYETİSYEN CEVAP KALİTESİ:
+
+**MÜKEMMEL CEVAP YAPISI:**
+1. **Uzman Tanım** (40-60 kelime)
+   "Protein vücudun yapı taşıdır ve günlük gereksinim..."
+
+2. **Bilimsel Açıklama** (80-120 kelime)
+   "Amino asitlerden oluşan proteinler, kas yapımı, enzim üretimi..."
+
+3. **Pratik Öneriler** (40-60 kelime)
+   "Günde 1.2-1.6 g/kg vücut ağırlığı kadar protein alınmalı..."
+
+4. **Diyetisyen Tavsiyesi** (30-40 kelime)
+   "Diyetisyen kontrolünde kişiselleştirilmiş plan önerilir..."
+
+**CEVAP KALİTE STANDARTLARI:**
+✅ 180-280 kelime arası (diyetisyen danışmanlığı için optimal)
+✅ Bilimsel doğruluk ve güncel beslenme bilimi
+✅ Pratik uygulanabilir tavsiyeler
+✅ Miktarlar ve önerilerle desteklenmiş
+✅ Profesyonel diyetisyen dili
+✅ Güvenli ve etik tavsiyeler
+
+❌ Medikal tanı/tedavi önerileri
+❌ Spesifik ilaç tavsiyeleri
+❌ Kesin sayısal değerler (kişiye özel)
+❌ Abartılı iddialar
+
+🔬 DİYETİSYEN BİLİMSEL KALİTE:
+- Beslenme terminolojisi doğru kullanımı
+- Güncel beslenme kılavuzlarına uygunluk
+- Kanıta dayalı beslenme önerileri
+- Güvenli beslenme prensipleri
+
+🎯 ADET HEDEF: {self.config.get('pdf_processing', {}).get('questions_per_chunk', 15)} DİYETİSYEN KALİTESİNDE soru-cevap çifti
+
+🚀 DİYETİSYEN CHATBOT KONTROL:
+- Her soru diyetisyen pratiğine uygun
+- Her cevap profesyonel danışmanlık seviyesi
+- Hiçbir referans/belirsizlik yok
+- Güvenli ve etik tavsiyeler
+- JSON formatına kesinlikle uy
+
+SADECE VE SADECE geçerli JSON array formatında yanıt ver!
 """
+
         return prompt.strip()
+    
+    def _clean_and_fix_json(self, json_text: str) -> str:
+        """Advanced JSON cleaning and fixing for Gemini API responses"""
+        try:
+            # Remove any text before first [ and after last ]
+            start_idx = json_text.find('[')
+            end_idx = json_text.rfind(']')
+            
+            if start_idx == -1 or end_idx == -1:
+                self.logger.warning("No JSON array found in response")
+                return "[]"
+                
+            json_text = json_text[start_idx:end_idx + 1]
+            
+            # Fix common JSON issues
+            fixes_applied = []
+            
+            # 1. Fix trailing commas
+            import re
+            original_text = json_text
+            json_text = re.sub(r',(\s*[\]}])', r'\1', json_text)
+            if json_text != original_text:
+                fixes_applied.append("trailing_commas")
+            
+            # 2. Fix missing commas between objects
+            original_text = json_text
+            json_text = re.sub(r'}\s*{', '}, {', json_text)
+            if json_text != original_text:
+                fixes_applied.append("missing_commas")
+            
+            # 3. Fix unescaped quotes in strings
+            def fix_quotes_in_strings(match):
+                content = match.group(1)
+                # Replace unescaped quotes inside the string
+                content = content.replace('"', '\\"')
+                return f'"{content}"'
+            
+            # Find and fix quotes in string values
+            original_text = json_text
+            json_text = re.sub(r'"([^"]*)"(\s*:\s*)"([^"]*(?:[^"\\]|\\.)*)"', 
+                             lambda m: f'"{m.group(1)}": "{m.group(3).replace(chr(34), chr(92)+chr(34))}"', 
+                             json_text)
+            
+            # 4. Fix single quotes to double quotes
+            original_text = json_text
+            json_text = json_text.replace("'", '"')
+            if json_text != original_text:
+                fixes_applied.append("single_quotes")
+            
+            # 5. Remove any non-JSON text at beginning or end
+            json_text = json_text.strip()
+            
+            # 6. Try to fix malformed arrays
+            if not json_text.startswith('['):
+                json_text = '[' + json_text
+                fixes_applied.append("missing_start_bracket")
+            if not json_text.endswith(']'):
+                json_text = json_text + ']'
+                fixes_applied.append("missing_end_bracket")
+            
+            # 7. Fix incomplete objects at the end
+            bracket_count = 0
+            brace_count = 0
+            fixed_text = ""
+            
+            for char in json_text:
+                fixed_text += char
+                if char == '[':
+                    bracket_count += 1
+                elif char == ']':
+                    bracket_count -= 1
+                elif char == '{':
+                    brace_count += 1
+                elif char == '}':
+                    brace_count -= 1
+            
+            # Close any unclosed braces
+            while brace_count > 0:
+                fixed_text += '}'
+                brace_count -= 1
+                fixes_applied.append("unclosed_braces")
+            
+            # Close any unclosed brackets
+            while bracket_count > 0:
+                fixed_text += ']'
+                bracket_count -= 1
+                fixes_applied.append("unclosed_brackets")
+            
+            json_text = fixed_text
+            
+            # Log applied fixes
+            if fixes_applied:
+                self.logger.info(f"Applied JSON fixes: {', '.join(fixes_applied)}")
+            
+            # Final validation attempt
+            try:
+                json.loads(json_text)
+                return json_text
+            except json.JSONDecodeError as e:
+                self.logger.warning(f"JSON still invalid after fixes: {e}")
+                
+                # Last resort: try to extract valid JSON objects manually
+                return self._extract_valid_qa_objects(json_text)
+                
+        except Exception as e:
+            self.logger.error(f"Error in JSON cleaning: {e}")
+            return "[]"
+    
+    def _extract_valid_qa_objects(self, text: str) -> str:
+        """Extract valid Q&A objects from malformed JSON as last resort"""
+        import re
+        
+        try:
+            # Find all potential Q&A objects using regex
+            pattern = r'\{[^{}]*"soru"[^{}]*"cevap"[^{}]*\}'
+            matches = re.findall(pattern, text, re.DOTALL)
+            
+            valid_objects = []
+            for match in matches:
+                try:
+                    # Try to parse each object individually
+                    obj = json.loads(match)
+                    if 'soru' in obj and 'cevap' in obj:
+                        valid_objects.append(obj)
+                except:
+                    continue
+            
+            if valid_objects:
+                result = json.dumps(valid_objects, ensure_ascii=False)
+                self.logger.info(f"Extracted {len(valid_objects)} valid Q&A objects from malformed JSON")
+                return result
+            else:
+                self.logger.warning("Could not extract any valid Q&A objects")
+                return "[]"
+                
+        except Exception as e:
+            self.logger.error(f"Error in Q&A extraction: {e}")
+            return "[]"
+    
+    def _validate_qa_pair(self, qa: Dict) -> bool:
+        """Specialized validation for dietitian and health chatbot Q&A pairs."""
+        if not isinstance(qa, dict):
+            return False
+        
+        if "soru" not in qa or "cevap" not in qa:
+            return False
+        
+        soru = qa["soru"].strip()
+        cevap = qa["cevap"].strip()
+        
+        # Length checks for dietitian consultation quality (RELAXED FOR PROFESSIONAL CONTENT)
+        if len(soru) < 20 or len(cevap) < 150:
+            self.logger.warning(f"Q&A too short for dietitian quality: Q={len(soru)} chars, A={len(cevap)} chars")
+            return False
+        
+        # INCREASED LIMITS FOR PROFESSIONAL DIETITIAN RESPONSES
+        if len(soru) > 400 or len(cevap) > 1500:
+            self.logger.warning(f"Q&A too long: Q={len(soru)} chars, A={len(cevap)} chars")
+            return False
+        
+        # Word count validation for dietitian responses (RELAXED)
+        soru_words = len(soru.split())
+        cevap_words = len(cevap.split())
+        
+        if soru_words < 8 or soru_words > 50:
+            self.logger.warning(f"Question word count out of range: {soru_words} words")
+            return False
+            
+        # INCREASED WORD LIMITS FOR DETAILED DIETITIAN RESPONSES
+        if cevap_words < 70 or cevap_words > 400:
+            self.logger.warning(f"Answer word count out of range: {cevap_words} words")
+            return False
+        
+        # Forbidden reference words that confuse health chatbots (REDUCED LIST)
+        forbidden_words = [
+            'makalede', 'metinde', 'kaynaklarda', 'yukarıda', 'aşağıda',
+            'belirtildiği gibi', 'anlatıldığı üzere', 'bahsedildiği', 
+            'şekilde gösterildiği', 'grafikte', 'resimde',
+            'bu makalede', 'bu metinde', 'bu araştırmada', 'yukarıdaki',
+            'aşağıdaki', 'gösterilen', 'verilen tabloda'
+            # REMOVED: 'şekil', 'tablo', 'tabloda' - these can be legitimate nutrition references
+        ]
+        
+        soru_lower = soru.lower()
+        cevap_lower = cevap.lower()
+        
+        for forbidden in forbidden_words:
+            if forbidden in soru_lower or forbidden in cevap_lower:
+                self.logger.warning(f"Forbidden reference detected: '{forbidden}' in Q&A pair")
+                return False
+        
+        # Check for vague references at start
+        vague_patterns = ['bu', 'şu', 'bunlar', 'şunlar', 'onlar', 'öteki', 'diğer']
+        soru_words_list = soru_lower.split()
+        
+        for i, word in enumerate(soru_words_list[:3]):
+            if word in vague_patterns:
+                self.logger.warning(f"Vague reference detected: '{word}' at position {i+1}")
+                return False
+        
+        # Dietitian-specific terminology validation
+        nutrition_terms = [
+            # Macronutrients
+            'protein', 'karbonhidrat', 'yağ', 'kalori', 'enerji', 'amino asit',
+            'glukoz', 'fruktoz', 'omega', 'doymuş', 'doymamış', 'trans',
+            
+            # Micronutrients
+            'vitamin', 'mineral', 'demir', 'kalsiyum', 'çinko', 'magnezyum',
+            'folat', 'b12', 'vitamin d', 'vitamin c', 'beta karoten',
+            
+            # Health conditions
+            'diyabet', 'hipertansiyon', 'kolesterol', 'trigliserit', 'anemi',
+            'osteoporoz', 'çölyak', 'gluten', 'laktoz', 'allerji',
+            
+            # Nutrition concepts
+            'metabolizma', 'emilim', 'sindirim', 'diyet', 'beslenme',
+            'besin', 'gıda', 'öğün', 'porsiyon', 'indeks', 'lif',
+            
+            # Body functions
+            'kas', 'kemik', 'bağışıklık', 'hormon', 'enzim', 'antioxidant'
+        ]
+        
+        # Check for dietitian terminology in answer (professional quality indicator)
+        has_nutrition_terms = any(term in cevap_lower for term in nutrition_terms)
+        
+        if not has_nutrition_terms:
+            self.logger.warning("Answer lacks nutrition/health terminology")
+            return False
+        
+        # Dietitian question quality indicators
+        dietitian_question_indicators = [
+            # Question starters
+            'hangi', 'nasıl', 'neden', 'kaç', 'ne kadar', 'kimler',
+            'nelerdir', 'nedir', 'nerelerde', 'ne zaman',
+            
+            # Nutrition topics
+            'beslenme', 'diyet', 'vitamin', 'mineral', 'protein', 'besin',
+            'sağlık', 'hastalık', 'kilo', 'enerji', 'metabolizma',
+            
+            # Professional terms
+            'önerilir', 'tavsiye', 'gereksinim', 'ihtiyaç', 'etki',
+            'fayda', 'risk', 'kontrol', 'dengeli', 'sağlıklı'
+        ]
+        
+        has_dietitian_question = any(indicator in soru_lower for indicator in dietitian_question_indicators)
+        
+        if not has_dietitian_question:
+            self.logger.warning("Question lacks dietitian consultation indicators")
+            return False
+        
+        # Check for unsafe medical claims (REFINED FOR DIETITIAN SCOPE)
+        unsafe_medical_terms = [
+            'tanı koy', 'teşhis et', 'tedavi et', 'iyileştir', 'tedavi ol',
+            'ilaç ver', 'reçete', 'doz al', 'tablet al'
+            # REMOVED: 'tanı', 'mg', 'ml' - these are legitimate nutrition terminology
+        ]
+        
+        for unsafe in unsafe_medical_terms:
+            if unsafe in cevap_lower:
+                self.logger.warning(f"Unsafe medical claim detected: '{unsafe}'")
+                return False
+        
+        # Check answer structure for dietitian consultation quality (RELAXED)
+        sentences = [s.strip() for s in cevap.split('.') if s.strip()]
+        if len(sentences) < 3:
+            self.logger.warning(f"Answer lacks dietitian consultation depth: only {len(sentences)} sentences")
+            return False
+        
+        # Professional language check (OPTIONAL FOR FLEXIBILITY)
+        professional_indicators = [
+            'önerilir', 'tavsiye edilir', 'dikkat edilmeli', 'önemlidir',
+            'gereklidir', 'faydalıdır', 'etkilidir', 'uygun', 'ideal',
+            'kontrol', 'dengelenme', 'planlanma', 'kişiselleştir',
+            'mg', 'gram', 'porsiyon', 'günlük', 'haftalık'  # Added nutrition units
+        ]
+        
+        has_professional_language = any(indicator in cevap_lower for indicator in professional_indicators)
+        
+        if not has_professional_language:
+            self.logger.info("Answer could benefit from more professional dietitian language")
+            # Changed to INFO instead of WARNING and don't return False
+        
+        return True
     
     def _call_gemini_api(self, text_content: str, images: List[bytes], max_retries: int = None) -> Optional[List[Dict]]:
         """Call Gemini API with text and images, with enhanced retry logic and API key rotation."""
         if max_retries is None:
-            max_retries = self._get_config_value('safety_settings.max_retries_per_key', 2) * len(self.config['api_keys'])
+            max_retries = self._get_config_value('safety_settings.max_retries', 3) * len(self.config['api_keys'])
         
         prompt = self._create_prompt()
         
@@ -579,15 +920,22 @@ Bu standartlarda veri üret. Hedef: Tıp fakültesi öğrencilerinin ve sağlık
                     time.sleep(1)  # Brief pause before retry
                     continue
                 
-                # Parse JSON response
+                # Parse JSON response with enhanced error handling
                 try:
-                    # Clean the response text (remove markdown code blocks if present)
+                    # Clean the response text with advanced JSON fixing
                     response_text = response.text.strip()
+                    
+                    # Remove markdown code blocks if present
                     if response_text.startswith('```json'):
                         response_text = response_text[7:]
+                    if response_text.startswith('```'):
+                        response_text = response_text[3:]
                     if response_text.endswith('```'):
                         response_text = response_text[:-3]
                     response_text = response_text.strip()
+                    
+                    # Advanced JSON cleaning for common Gemini API issues
+                    response_text = self._clean_and_fix_json(response_text)
                     
                     qa_pairs = json.loads(response_text)
                     
@@ -595,70 +943,30 @@ Bu standartlarda veri üret. Hedef: Tıp fakültesi öğrencilerinin ve sağlık
                         self.logger.warning("Response is not a JSON array")
                         continue
                     
-                    # Validate each Q&A pair with quality checks
-                    valid_pairs = []
+                    # Validate and clean each Q&A pair
+                    valid_qa_pairs = []
                     for qa in qa_pairs:
-                        if isinstance(qa, dict) and all(key in qa for key in ['soru', 'cevap']):
-                            # Ultra quality checks
-                            question = qa['soru'].strip()
-                            answer = qa['cevap'].strip()
-                            
-                            # Check for ultra quality minimum length standards
-                            if len(question) < 15 or len(answer) < 100:
-                                self.logger.warning(f"Skipping low quality Q&A: Question too short ({len(question)} chars) or answer too brief ({len(answer)} chars)")
-                                continue
-                                
-                            # Check for forbidden table/figure references
-                            forbidden_patterns = [
-                                'tablo', 'şekil', 'grafik', 'çizelge', 'resim',
-                                'yukarıdaki', 'aşağıdaki', 'tabloda', 'şekilde', 
-                                'grafikte', 'görselde', 'fotoğrafta'
-                            ]
-                            
-                            answer_lower = answer.lower()
-                            question_lower = question.lower()
-                            
-                            # Check for table/figure references in Turkish
-                            has_forbidden = False
-                            for pattern in forbidden_patterns:
-                                if pattern in answer_lower or pattern in question_lower:
-                                    # Allow some exceptions like "şekillenmesi", "tablolama" etc.
-                                    if not any(exception in answer_lower for exception in ['şekillenmesi', 'şekillenir', 'tablolama']):
-                                        has_forbidden = True
-                                        break
-                            
-                            # Check for numbered references like "Tablo 3.1", "Şekil 2"
-                            import re
-                            if re.search(r'(tablo|şekil|grafik|çizelge)\s*\d+', answer_lower) or \
-                               re.search(r'(tablo|şekil|grafik|çizelge)\s*\d+', question_lower):
-                                has_forbidden = True
-                            
-                            if has_forbidden:
-                                self.logger.warning(f"Skipping Q&A with table/figure reference")
-                                continue
-                            
-                            # Check for ultra quality word count (professional level)
-                            word_count = len(answer.split())
-                            if word_count < 25:
-                                self.logger.warning(f"Skipping Q&A with too brief answer ({word_count} words) - need minimum 25 words for ultra quality")
-                                continue
-                            
-                            # Check for too generic or vague language
-                            vague_patterns = ['genellikle', 'çoğunlukla', 'bazen', 'muhtemelen', 'sanırım']
-                            vague_count = sum(1 for pattern in vague_patterns if pattern in answer.lower())
-                            if vague_count > 2:
-                                self.logger.warning(f"Skipping Q&A with too much vague language ({vague_count} vague words)")
-                                continue
-                            
-                            valid_pairs.append(qa)
-                        else:
-                            self.logger.warning(f"Invalid Q&A pair format: {qa}")
+                        if self._validate_qa_pair(qa):
+                            # Simplified output format - only question and answer
+                            clean_qa = {
+                                "soru": qa.get("soru", "").strip(),
+                                "cevap": qa.get("cevap", "").strip()
+                            }
+                            valid_qa_pairs.append(clean_qa)
                     
-                    if valid_pairs:
-                        self.logger.info(f"Generated {len(valid_pairs)} valid Q&A pairs (filtered for quality)")
-                        return valid_pairs
+                    # Enhanced statistics for ML training
+                    if valid_qa_pairs:
+                        # Simplified stats calculation
+                        total_questions = len(valid_qa_pairs)
+                        avg_question_length = sum(len(qa['soru'].split()) for qa in valid_qa_pairs) / total_questions
+                        avg_answer_length = sum(len(qa['cevap'].split()) for qa in valid_qa_pairs) / total_questions
+                        avg_total_length = avg_question_length + avg_answer_length
+                        
+                        self.logger.info(f"ML Training Quality Metrics - Questions: {total_questions}, Avg Q Length: {avg_question_length:.1f}, Avg A Length: {avg_answer_length:.1f} words")
+                        
+                        return valid_qa_pairs
                     else:
-                        self.logger.warning("No valid Q&A pairs found in response after quality filtering")
+                        self.logger.warning("No valid Q&A pairs found after enhanced ML training quality filtering")
                         continue
                 
                 except json.JSONDecodeError as e:
@@ -679,26 +987,22 @@ Bu standartlarda veri üret. Hedef: Tıp fakültesi öğrencilerinin ve sağlık
                     # Add extra delay for rate limiting
                     if 'rate limit' in error_msg or '429' in error_msg or 'too many requests' in error_msg:
                         delay = min(self._current_delay * 2, 30)  # Max 30 seconds
-                        self.logger.info(f"Rate limit detected, waiting {delay}s before retry...")
+                        self.logger.info(f"🚦 Rate limit detected, waiting {delay}s before retry...")
                         time.sleep(delay)
                     
-                    # Try to rotate API key if we haven't exhausted retries for current key
-                    if attempt % self.config.get('max_retries_per_key', 2) == (self.config.get('max_retries_per_key', 2) - 1):
-                        if self._rotate_api_key():
-                            self.logger.info("Rotated API key due to limits, retrying...")
-                            continue
-                        else:
-                            self.logger.error("All API keys exhausted, cannot continue")
-                            return None
-                    else:
-                        # Wait before retry with same key
-                        time.sleep(self.config.get('api_rate_limit_delay', 2))
+                    # Try to rotate API key immediately on quota/permission errors
+                    if self._rotate_api_key():
+                        self.logger.info("🔄 Rotated API key due to quota/permission limits, retrying...")
                         continue
+                    else:
+                        self.logger.error("❌ All API keys exhausted, cannot continue")
+                        return None
                         
                 elif 'timeout' in error_msg or 'deadline' in error_msg:
-                    self.logger.warning(f"Timeout error (attempt {attempt + 1}): {e}")
+                    self.logger.warning(f"⏱️ Timeout error (attempt {attempt + 1}): {e}")
                     # Increase delay for timeout errors
                     timeout_delay = min(5 * (attempt + 1), 30)
+                    self.logger.info(f"⏱️ Waiting {timeout_delay}s for timeout recovery...")
                     time.sleep(timeout_delay)
                     continue
                     
@@ -774,14 +1078,17 @@ Bu standartlarda veri üret. Hedef: Tıp fakültesi öğrencilerinin ve sağlık
                 self.logger.error(f"Failed to generate any Q&A pairs for {pdf_path.name}")
                 return False
             
-            # Save to output file without source information
-            output_path = Path(self._get_config_value('pdf_processing.output_folder', 'output_json')) / self._get_config_value('pdf_processing.output_filename', 'toplam_egitim_veriseti.jsonl')
+            # Save to output file with enhanced metadata for ML training
+            output_file = Path(self.config['pdf_processing']['output_folder']) / self.config['pdf_processing']['output_filename']
             
-            with open(output_path, 'a', encoding='utf-8') as f:
-                for qa in all_qa_pairs:
-                    # Remove source information from output - only keep soru and cevap
-                    clean_qa = {'soru': qa['soru'], 'cevap': qa['cevap']}
-                    f.write(json.dumps(clean_qa, ensure_ascii=False) + '\n')
+            with open(output_file, 'a', encoding='utf-8') as f:
+                for qa_pair in all_qa_pairs:
+                    # Simplified JSONL format - only question and answer
+                    output_data = {
+                        "soru": qa_pair["soru"],
+                        "cevap": qa_pair["cevap"]
+                    }
+                    f.write(json.dumps(output_data, ensure_ascii=False) + '\n')
             
             self.logger.info(f"Successfully processed {pdf_path.name}: {len(all_qa_pairs)} total Q&A pairs generated from {len(text_chunks)} chunks")
             return True
