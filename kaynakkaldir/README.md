@@ -2,6 +2,44 @@
 
 Bu modül, JSON dosyalarından kaynak bilgilerini temizleme ve AI teknolojileri kullanarak veri çoğaltma işlemleri gerçekleştiren Python araçlarını içerir.
 
+## 🔐 GÜVENLİK VE KURULUM ÖNCESİ ÖNEMLİ NOTLAR
+
+### ⚠️ API Anahtarı Güvenliği
+**MUTLAKA OKUMANIZ GEREKEN GÜVENLİK BİLGİLERİ:**
+
+1. **API anahtarlarınızı asla Git'e commit etmeyin**
+2. **`config_example.json`'dan `config.json` oluşturun**
+3. **Gerçek API anahtarlarınızı sadece `config.json`'a yazın**
+
+### 🛠️ Güvenli Kurulum Adımları
+
+#### 1. Config Dosyası Oluşturun
+```powershell
+# Bu klasörde (kaynakkaldir):
+copy config_example.json config.json
+```
+
+#### 2. API Anahtarları Ekleyin
+`config.json` dosyasını açın ve placeholder'ları değiştirin:
+```json
+{
+  "api_settings": {
+    "providers": [
+      {
+        "name": "gemini",
+        "api_keys": ["AIzaSyYour_Real_API_Key_Here_1", "AIzaSyYour_Real_API_Key_Here_2"],
+        "enabled": true
+      }
+    ]
+  }
+}
+```
+
+#### 3. API Anahtarını Alın
+- [Google AI Studio](https://aistudio.google.com/app/apikey) adresine gidin
+- Yeni API anahtarları oluşturun
+- **Bu anahtarları güvenli şekilde saklayın**
+
 ## 🎯 Modül Özellikleri
 
 - **JSON Kaynak Temizleme**: Veri setlerinden kaynak/referans bilgilerini kaldırma
@@ -9,6 +47,7 @@ Bu modül, JSON dosyalarından kaynak bilgilerini temizleme ve AI teknolojileri 
 - **Çoklu API Desteği**: Gemini ve OpenAI API entegrasyonu
 - **Eşzamanlı İşleme**: Hızlı toplu veri işleme
 - **Konfigürasyon Yönetimi**: Esnek API ve işlem ayarları
+- **Güvenli Config Yönetimi**: API anahtarları Git'ten korunur
 
 ## 📋 Gereksinimler
 
@@ -29,7 +68,15 @@ openai>=0.28.0
 pip install -r requirements.txt
 ```
 
-### 2. API Anahtarlarını Yapılandırın
+### 2. Güvenli API Anahtarı Yapılandırması
+```powershell
+# Config dosyası oluşturun
+copy config_example.json config.json
+
+# config.json'ı düzenleyip gerçek API anahtarlarınızı ekleyin
+```
+
+### 3. Konfigürasyon Ayarları
 `config.json` dosyasında API anahtarlarınızı güncelleyin:
 ```json
 {
@@ -37,10 +84,19 @@ pip install -r requirements.txt
     "providers": [
       {
         "name": "gemini",
-        "api_keys": ["YOUR_GEMINI_API_KEY_HERE"],
-        "enabled": true
+        "api_keys": ["YOUR_GEMINI_API_KEY_1", "YOUR_GEMINI_API_KEY_2"],
+        "model": "gemini-1.5-flash-latest",
+        "enabled": true,
+        "rate_limit_delay": 1.0,
+        "max_requests_per_minute": 60,
+        "key_rotation_strategy": "round_robin"
       }
     ]
+  },
+  "augmentation_settings": {
+    "variations_per_question": 10,
+    "min_variations": 5,
+    "max_variations": 20
   }
 }
 ```
@@ -55,8 +111,9 @@ pip install -r requirements.txt
 - Tek dosya veya klasör bazında işlem yapar
 - Yedek dosya oluşturur
 
-**Nasıl çalıştırılır:**
+**Güvenli çalıştırma:**
 ```powershell
+# İnternet bağlantısı gerektirmez
 python kaynak_kaldir.py
 ```
 
@@ -70,29 +127,29 @@ python kaynak_kaldir.py
 - Çoklu kaynak alan türlerini destekler
 - Hata yönetimi ve logging
 
-**Nasıl çalıştırılır:**
+**Güvenli çalıştırma:**
 ```powershell
 python gelismis_kaynak_kaldir.py
 ```
 
 ### Veri Çoğaltma Araçları
 
-#### 3. `vericogaltma.py` - Basit AI Veri Çoğaltıcı
+#### 3. `vericogaltma.py` - AI Veri Çoğaltıcı (Güncellendi)
 **Ne yapar:**
 - Mevcut soru-cevap çiftlerinden yeni varyasyonlar oluşturur
-- Google Gemini API kullanır
+- Config dosyasından API anahtarlarını okur ✅
 - Eşzamanlı işleme desteği
 
-**Nasıl çalıştırılır:**
+**Güvenli çalıştırma:**
 ```powershell
-# Önce API anahtarını dosyada güncelleyin
+# Önce config.json oluşturun ve API anahtarlarınızı ekleyin
+copy config_example.json config.json
+# API anahtarlarınızı config.json'a ekleyin
+
 python vericogaltma.py
 ```
 
-**Çalıştırmadan önce yapılması gerekenler:**
-1. Dosyada `API_KEYS` listesini güncelleyin
-2. `INPUT_FILE` ve `OUTPUT_FILE` yollarını kontrol edin
-3. İşlem limitlerini ayarlayın (`PROCESS_LIMIT`, `MAX_CONCURRENT_REQUESTS`)
+**Önemli:** Artık API anahtarları kodda hardcode değil, config dosyasından okunuyor.
 
 #### 4. `gelismis_vericogaltma.py` - Gelişmiş Veri Çoğaltıcı
 **Ne yapar:**
@@ -100,46 +157,80 @@ python vericogaltma.py
 - Gelişmiş hata yönetimi ve yeniden deneme
 - API anahtar rotasyonu
 - Rate limiting ve adaptif gecikme
+- Config dosyası tabanlı yönetim
 
-**Nasıl çalıştırılır:**
+**Güvenli çalıştırma:**
 ```powershell
+# Config dosyası hazır olduğundan emin olun
 python gelismis_vericogaltma.py
 ```
 
-**Çalıştırmadan önce yapılması gerekenler:**
-1. `config.json` dosyasını yapılandırın
-2. API anahtarlarını ekleyin
-3. İşlem ayarlarını düzenleyin
+### Konfigürasyon Dosyaları
 
-## 🚀 Kullanım Senaryoları
-
-### Scenario 1: JSON Dosyalarını Temizleme
-```powershell
-# Basit temizleme işlemi
-python kaynak_kaldir.py
-
-# Gelişmiş temizleme işlemi
-python gelismis_kaynak_kaldir.py
-```
-
-### Scenario 2: Veri Çoğaltma (Temel)
-1. `vericogaltma.py` dosyasını açın
-2. Satır 11-16 arası API anahtarlarınızı ekleyin
-3. Satır 18-19'da dosya yollarını kontrol edin
-4. Çalıştırın:
-```powershell
-python vericogaltma.py
-```
-
-### Scenario 3: Gelişmiş Veri Çoğaltma
-1. `config.json` dosyasını düzenleyin:
+#### 5. `config_example.json` - Güvenli Config Şablonu
+**İçeriği:**
 ```json
 {
   "api_settings": {
     "providers": [
       {
         "name": "gemini",
-        "api_keys": ["API_KEY_1", "API_KEY_2"],
+        "api_keys": [
+          "YOUR_GEMINI_API_KEY_1",
+          "YOUR_GEMINI_API_KEY_2",
+          "YOUR_GEMINI_API_KEY_3"
+        ],
+        "model": "gemini-1.5-flash-latest",
+        "enabled": true,
+        "rate_limit_delay": 1.0,
+        "max_requests_per_minute": 60,
+        "key_rotation_strategy": "round_robin"
+      }
+    ]
+  }
+}
+```
+
+**Önemli:** Bu dosya Git'e commit edilir ama gerçek API anahtarları içermez.
+
+#### 6. `config.json` - Gerçek Konfigürasyon
+**Önemli:** Bu dosya `.gitignore` ile Git'ten hariç tutulmuştur.
+
+## 🚀 Kullanım Senaryoları
+
+### Scenario 1: JSON Dosyalarını Temizleme
+```powershell
+# Basit temizleme işlemi (güvenli)
+python kaynak_kaldir.py
+
+# Gelişmiş temizleme işlemi (güvenli)
+python gelismis_kaynak_kaldir.py
+```
+
+### Scenario 2: İlk Kez Güvenli Veri Çoğaltma
+```powershell
+# 1. Config dosyası oluşturun
+copy config_example.json config.json
+
+# 2. config.json'ı açın ve API anahtarlarınızı ekleyin
+# YOUR_GEMINI_API_KEY_X kısımlarını gerçek anahtarlarla değiştirin
+
+# 3. Çalıştırın
+python vericogaltma.py
+```
+
+### Scenario 3: Gelişmiş Veri Çoğaltma
+```powershell
+# 1. Config dosyasını hazırlayın
+copy config_example.json config.json
+
+# 2. config.json'ı düzenleyin:
+{
+  "api_settings": {
+    "providers": [
+      {
+        "name": "gemini",
+        "api_keys": ["YOUR_REAL_API_KEY_1", "YOUR_REAL_API_KEY_2"],
         "enabled": true
       }
     ]
@@ -155,10 +246,8 @@ python vericogaltma.py
     }
   }
 }
-```
 
-2. Çalıştırın:
-```powershell
+# 3. Çalıştırın
 python gelismis_vericogaltma.py
 ```
 
@@ -170,7 +259,50 @@ Klasörde bulunan örnek dosyalar:
 - `quiz.json` - Quiz verileri
 - `egitim.json` - Eğitim verileri
 
-## ⚠️ Önemli Notlar
+## ⚠️ Güvenlik Özellikleri
+
+### API Anahtarı Koruması
+- ✅ `config.json` Git'ten hariç tutuldu
+- ✅ `config_example.json` sadece placeholder içerir
+- ✅ Gerçek anahtarlar sadece local'de saklanır
+- ✅ `vericogaltma.py` artık config dosyası kullanıyor
+- ✅ `.gitignore` kuralları eksiksiz
+
+### Veri Güvenliği
+- Otomatik backup sistemi
+- Hata toleransı
+- Rate limiting koruması
+- Güvenli dosya işleme
+
+### Proje Güvenliği
+```
+# Bu dosyalar Git'e gönderilmez:
+config.json           # Gerçek API anahtarları
+logs/                 # Log dosyaları
+*.log                 # Log dosyaları
+```
+
+## 🔧 Sorun Giderme
+
+### Yaygın Hatalar:
+1. **Config Not Found**: `copy config_example.json config.json` komutunu çalıştırın
+2. **API Key Error**: `config.json`'da gerçek API anahtarlarınızı kontrol edin
+3. **ModuleNotFoundError**: `pip install -r requirements.txt`
+4. **Rate Limit Error**: İstek sayısını azaltın
+5. **File Not Found**: Dosya yollarını kontrol edin
+
+### Güvenlik Kontrolleri:
+```powershell
+# Config dosyasının Git'te olmadığını kontrol edin:
+git status
+
+# config.json dosyası "Untracked files" altında görünmelidir
+```
+
+### Debug Modları:
+Hata ayıklama için dosyalarda bulunan debug flaglerini aktifleştirin.
+
+## 📈 Performans İpuçları
 
 ### API Limitleri:
 - Gemini API: Dakikada 60 istek limiti
@@ -186,106 +318,43 @@ Klasörde bulunan örnek dosyalar:
 - Büyük dosyalar için `PROCESS_LIMIT` kullanın
 - `MAX_CONCURRENT_REQUESTS` değerini API limitine göre ayarlayın
 - Kararlı internet bağlantısı kullanın
+- Çoklu API anahtarı kullanarak hızlandırın
 
-## 🔧 Sorun Giderme
+## 📝 Dosya Güvenliği
 
-### Yaygın Hatalar:
-1. **ModuleNotFoundError**: `pip install -r requirements.txt`
-2. **API Key Error**: Anahtarları doğru konfigüre edin
-3. **Rate Limit Error**: İstek sayısını azaltın
-4. **File Not Found**: Dosya yollarını kontrol edin
+### Git İçin Güvenli Dosyalar:
+- `README.md`
+- `requirements.txt`
+- `config_example.json`
+- `*.py` dosyaları
+- Örnek veri dosyaları (`*.json`)
 
-### Debug Modları:
-Hata ayıklama için dosyalarda bulunan debug flaglerini aktifleştirin.
+### Git'e Gönderilmeyen Dosyalar:
+- `config.json` (gerçek API anahtarları)
+- `logs/` (log dosyaları)
+- `*.log` (log dosyaları)
 
-## 📈 İşlem İstatistikleri
+## 🎯 Güncelleme Notları
 
-Araçlar çalışırken size şu bilgileri sağlar:
-- İşlenen dosya sayısı
-- Oluşturulan veri sayısı  
-- API çağrı istatistikleri
-- Hata ve başarı oranları
+### v2.0 Güvenlik Güncellemesi:
+- ✅ `vericogaltma.py` artık config dosyası kullanıyor
+- ✅ Hardcode API anahtarları kaldırıldı
+- ✅ `.gitignore` kuralları eklendi
+- ✅ `config_example.json` şablonu oluşturuldu
 
-## Özellikler
+### Eski Versiyondan Geçiş:
+```powershell
+# 1. Config dosyası oluşturun
+copy config_example.json config.json
 
-### Basit Versiyon
-- Mevcut klasördeki tüm JSON dosyalarını işler
-- Kaynak alanlarını otomatik bulur ve kaldırır
-- UTF-8 kodlaması desteği
-
-### Gelişmiş Versiyon
-- 🎯 **Esnek kullanım**: Tek dosya, tüm klasör veya belirli klasör seçimi
-- 💾 **Yedek alma**: Orijinal dosyaları güvenle saklar
-- 📊 **Detaylı raporlama**: Hangi kaynak alanlarının kaldırıldığını gösterir
-- 📏 **Boyut analizi**: Dosya boyutundaki değişimi raporlar
-- 🔍 **Kaynak analizi**: İşlem öncesi kaynak alanlarını listeler
-
-## Veri Çoğaltma Özellikleri
-
-### Basit Versiyon (vericogaltma.py)
-- Gemini API desteği
-- Sabit 10 varyasyon üretimi
-- Sıralı işlem
-
-### Gelişmiş Versiyon (gelismis_vericogaltma.py)
-- 🚀 **Çoklu API desteği**: Gemini ve OpenAI
-- ⚡ **Eşzamanlı işlem**: Çoklu thread desteği
-- 🎛️ **Dinamik konfigürasyon**: JSON dosyası ile ayarlanabilir
-- 📈 **Esnek varyasyon sayısı**: Min-max aralığında ayarlanabilir
-- 🔒 **Rate limiting**: API limitlerine uygun gecikme
-- 💾 **Otomatik yedekleme**: İşlem öncesi veri yedeği
-- 📊 **Detaylı loglama**: İşlem takibi ve hata raporlama
-- 🎯 **Akıllı dağılım**: Load balancing ile API kullanımı
-
-## Konfigürasyon (config.json)
-
-### API Ayarları
-- Çoklu API sağlayıcı desteği
-- Provider başına enable/disable
-- Rate limiting ayarları
-- Model seçimi
-
-### Çoğaltma Ayarları
-- Dinamik varyasyon sayısı (5-20 arası)
-- Varyasyon tiplerinin dağılımı
-- Batch işlem boyutu
-
-### İşlem Ayarları
-- Eşzamanlı istek sayısı
-- Girdi/çıktı dosya yolları
-- Yedekleme seçenekleri
-
-## Kaldırılan Alan Adları
-
-Betik aşağıdaki alan adlarını arar ve kaldırır:
-- `kaynak`
-- `source`
-- `kaynaklar`
-- `sources`
-- `referans`
-- `reference`
-
-## Güvenlik
-
-- Gelişmiş versiyonda otomatik yedek oluşturma
-- UTF-8 karakter desteği
-- Hata durumunda dosya bozulmasını önleme
-
-## Örnek
-
-**Önce:**
-```json
-{
-  "soru": "Python nedir?",
-  "cevap": "Python bir programlama dilidir",
-  "kaynak": "Python Documentation"
-}
+# 2. Eski API anahtarlarınızı config.json'a taşıyın
+# 3. Artık kod dosyalarını düzenlemeniz gerekmez
 ```
 
-**Sonra:**
-```json
-{
-  "soru": "Python nedir?",
-  "cevap": "Python bir programlama dilidir"
-}
-```
+---
+
+**⚠️ GÜVENLİK HATIRLATMASI**: 
+- API anahtarlarınızı asla Git'e commit etmeyin
+- Her zaman `config_example.json`'dan `config.json` oluşturun
+- Gerçek anahtarlarınızı sadece `config.json`'a yazın
+- `git status` ile config.json'ın tracked olmadığını kontrol edin

@@ -1,8 +1,42 @@
 # 🛡️ Ultra Safe Sağlık Chatbot Veri Çoğaltma Sistemi
 
+## 🔐 GÜVENLİK VE KURULUM ÖNCESİ ÖNEMLİ NOTLAR
+
+### ⚠️ API Anahtarı Güvenliği
+**MUTLAKA OKUMANIZ GEREKEN GÜVENLİK BİLGİLERİ:**
+
+1. **API anahtarlarınızı asla Git'e commit etmeyin**
+2. **`config_example.json`'dan `config.json` oluşturun**
+3. **Gerçek API anahtarlarınızı sadece `config.json`'a yazın**
+
+### 🛠️ Güvenli Kurulum Adımları
+
+#### 1. Config Dosyası Oluşturun
+```powershell
+# Bu klasörde (DataMin2x):
+copy config_example.json config.json
+```
+
+#### 2. API Anahtarları Ekleyin
+`config.json` dosyasını açın ve placeholder'ları değiştirin:
+```json
+{
+  "api_keys": [
+    "AIzaSyYour_Real_API_Key_Here_1",
+    "AIzaSyYour_Real_API_Key_Here_2",
+    "AIzaSyYour_Real_API_Key_Here_3"
+  ]
+}
+```
+
+#### 3. API Anahtarını Alın
+- [Google AI Studio](https://aistudio.google.com/app/apikey) adresine gidin
+- Yeni API anahtarları oluşturun (önerilen: 5+ anahtar)
+- **Bu anahtarları güvenli şekilde saklayın**
+
 ## 📋 Özellikler
 
-- ✅ **12 API Key** desteği ile paralel işlem
+- ✅ **33+ API Key** desteği ile paralel işlem
 - 🛡️ **Ultra Safe** güvenlik kontrolleri
 - 🏥 **Medikal doğrulama** sistemi
 - 🇹🇷 **Türkçe** dil bilgisi kontrolleri
@@ -12,6 +46,7 @@
 - 📈 **Real-time monitoring** ve raporlama
 - 🚨 **Emergency stop** mekanizması
 - 💰 **Maliyet takibi** ve optimizasyon
+- 🔐 **Güvenli Config Yönetimi**: API anahtarları Git'ten korunur
 
 ## 🔄 **YENİ ÖZELLİK: CANLI API KEY YÖNETİMİ**
 
@@ -19,7 +54,7 @@
 
 Sistem çalışırken durdurmadan yeni API key ekleyebilirsiniz!
 
-```bash
+```powershell
 # Başka bir terminal açın
 python add_api_key.py
 ```
@@ -46,7 +81,7 @@ python add_api_key.py
 ### **Kullanım Senaryoları**
 
 **Senaryo 1: İşlem sırasında keyler quota aştı**
-```bash
+```powershell
 # Terminal 1: Ana işlem çalışıyor
 python data_augmenter.py
 
@@ -58,7 +93,7 @@ python add_api_key.py
 ```
 
 **Senaryo 2: Performans artırmak için key ekleme**
-```bash
+```powershell
 # Hızlandırmak için daha fazla key ekleyin
 python add_api_key.py
 # Sistem 5 batch içinde yeni keyleri algılayacak
@@ -75,9 +110,10 @@ python add_api_key.py
 - Duplicate detection (85% threshold)
 - Content filtering & profanity detection
 - Emergency stop mechanism
+- Secure API key management
 
 ### **⚡ High Performance**
-- **14+ API key** paralel kullanım
+- **33+ API key** paralel kullanım
 - **3 saniye** rate limiting
 - **10 Q&A** per batch
 - **0.9 saat** tahmini süre
@@ -93,27 +129,40 @@ python add_api_key.py
 
 ---
 
-## 🚀 Hızlı Başlangıç
+## 🚀 Hızlı Güvenli Başlangıç
 
 ### 1. Gereksinimleri Yükleyin
-```bash
+```powershell
 pip install -r requirements.txt
 ```
 
-### 2. API Keylerini Ekleyin
+### 2. Güvenli Config Kurulumu
+```powershell
+# Config dosyası oluşturun
+copy config_example.json config.json
+
+# config.json'ı düzenleyip gerçek API anahtarlarınızı ekleyin
+```
+
+### 3. API Keylerini Ekleyin
 `config.json` dosyasını açın ve API keylerini ekleyin:
 ```json
 {
   "api_keys": [
-    "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "AIzaSyYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
-    // ... 12 adede kadar
-  ]
+    "AIzaSyYour_Real_API_Key_1",
+    "AIzaSyYour_Real_API_Key_2",
+    "AIzaSyYour_Real_API_Key_3",
+    // ... 33 adede kadar
+  ],
+  "safety_settings": {
+    // diğer ayarlar...
+  }
 }
 ```
 
-### 3. Çalıştırın
-```bash
+### 4. Güvenli Çalıştırma
+```powershell
+# Config hazır olduğundan emin olun
 python data_augmenter.py
 ```
 
@@ -122,8 +171,10 @@ python data_augmenter.py
 ```
 DataMin2x/
 ├── 250630AllData.json         # Orijinal veri (11,467 çift)
-├── config.json                # API keys + ayarlar
+├── config_example.json        # Güvenli config şablonu ✅
+├── config.json                # Gerçek config (Git'te değil) ✅
 ├── data_augmenter.py          # Ana script
+├── add_api_key.py            # Canlı API key yönetimi
 ├── validators.py              # Veri doğrulama
 ├── safety_monitor.py          # Güvenlik izleme
 ├── utils.py                   # Yardımcı fonksiyonlar
@@ -138,7 +189,40 @@ DataMin2x/
 └── logs/                      # Log dosyaları
 ```
 
-## ⚙️ Konfigürasyon
+## ⚙️ Güvenli Konfigürasyon
+
+### Konfigürasyon Dosyaları
+
+#### `config_example.json` - Güvenli Şablon
+```json
+{
+  "api_keys": [
+    "YOUR_GEMINI_API_KEY_1",
+    "YOUR_GEMINI_API_KEY_2",
+    "YOUR_GEMINI_API_KEY_3"
+  ],
+  "safety_settings": {
+    "batch_size": 6,
+    "delay_between_requests": 7,
+    "max_retries": 5,
+    "duplicate_threshold": 0.85,
+    "auto_backup_frequency": 50,
+    "max_fails_per_hour": 8,
+    "emergency_shutdown_threshold": 25
+  },
+  "quality_controls": {
+    "medical_accuracy_check": true,
+    "turkish_grammar_validation": true,
+    "citation_preservation": true,
+    "content_length_validation": true,
+    "profanity_filter": true,
+    "duplicate_detection": true
+  }
+}
+```
+
+#### `config.json` - Gerçek Konfigürasyon
+**Önemli:** Bu dosya `.gitignore` ile Git'ten hariç tutulmuştur.
 
 ### Güvenlik Ayarları
 ```json
@@ -169,7 +253,7 @@ DataMin2x/
 
 - **Girdi:** 11,467 soru-cevap çifti
 - **Çıktı:** ~25,000-30,000 çift (2.5x artış)
-- **Süre:** 2-3 saat (12 API key ile)
+- **Süre:** 2-3 saat (33+ API key ile)
 - **Kalite:** %95+ başarı oranı
 
 ## 🔧 İzleme ve Kontrole
@@ -181,14 +265,21 @@ DataMin2x/
 
 ### Emergency Stop
 Acil durumda şu dosyayı oluşturun:
-```bash
+```powershell
 touch EMERGENCY_STOP
 ```
 
 ### Checkpoint'ten Devam
 Sistem otomatik olarak kaldığı yerden devam eder.
 
-## 🚨 Güvenlik Özellikleri
+## ⚠️ Güvenlik Özellikleri
+
+### API Anahtarı Koruması
+- ✅ `config.json` Git'ten hariç tutuldu
+- ✅ `config_example.json` sadece placeholder içerir
+- ✅ Gerçek anahtarlar sadece local'de saklanır
+- ✅ Canlı API key ekleme sistemi
+- ✅ `.gitignore` kuralları eksiksiz
 
 ### Medikal Doğrulama
 - Tehlikeli ifadeler engellenir
@@ -198,79 +289,77 @@ Sistem otomatik olarak kaldığı yerden devam eder.
 ### API Güvenliği
 - Rate limiting
 - Automatic failover
-- Cost monitoring
-- Token limit kontrolü
+- Key rotation
+- Usage monitoring
 
-### Veri Güvenliği
-- Otomatik backup
-- Checkpoint sistemi
-- Duplicate protection
-- Memory management
-
-## 🔍 Sorun Giderme
-
-### API Key Sorunları
-```bash
-# Log dosyasını kontrol edin
-tail -f logs/ultra_safe_*.log
-
-# API key test edin
-python -c "import google.generativeai as genai; genai.configure(api_key='YOUR_KEY'); print('OK')"
+### Proje Güvenliği
+```
+# Bu dosyalar Git'e gönderilmez:
+config.json           # Gerçek API anahtarları
+logs/                 # Log dosyaları
+output/               # Çıktı dosyaları
+backups/              # Yedek dosyaları
+checkpoints/          # Checkpoint dosyaları
 ```
 
-### Memory Sorunları
-```bash
-# Memory kullanımını kontrol edin
-python -c "import psutil; print(f'Memory: %{psutil.virtual_memory().percent}')"
+## 🔧 Sorun Giderme
+
+### Yaygın Hatalar:
+1. **Config Not Found**: `copy config_example.json config.json` komutunu çalıştırın
+2. **API Key Error**: `config.json`'da gerçek API anahtarlarınızı kontrol edin
+3. **Permission Error**: Klasör yazma izinlerini kontrol edin
+4. **Module Not Found**: `pip install -r requirements.txt` çalıştırın
+
+### Güvenlik Kontrolleri:
+```powershell
+# Config dosyasının Git'te olmadığını kontrol edin:
+git status
+
+# config.json dosyası "Untracked files" altında görünmelidir
 ```
 
-### Token Limit Sorunları
-- `batch_size`'ı azaltın (config.json)
-- `max_tokens_per_request`'i düşürün
+### API Key Test:
+```powershell
+# API anahtarlarınızı test edin
+python add_api_key.py
+# Menüden "4. Config'deki tüm keyleri test et" seçin
+```
 
-## 📞 Destek
+## 📈 Performans İpuçları
 
-Sorun yaşarsanız:
-1. `logs/` klasöründeki en son log dosyasını kontrol edin
-2. `output/final_report.json`'da hata raporlarını inceleyin
-3. Emergency shutdown'dan sonra `emergency_shutdown.json`'u kontrol edin
+1. **Çoklu API Anahtarı**: 5+ anahtar kullanarak hızlandırın
+2. **Batch Settings**: Sistem ayarlarını optimize edin
+3. **Monitoring**: Real-time izleme ile performansı takip edin
+4. **Hot-Swap**: Çalışma sırasında yeni anahtarlar ekleyin
 
-## 🎯 Performans Optimizasyonu
+## 📝 Dosya Güvenliği
 
-### Hızlandırma İçin:
-- `batch_size`'ı artırın (6 → 8)
-- `delay_between_requests`'i azaltın (7 → 5)
-- Daha fazla API key ekleyin
+### Git İçin Güvenli Dosyalar:
+- `README.md`
+- `requirements.txt`
+- `config_example.json`
+- `*.py` dosyaları
+- `250630AllData.json` (orijinal veri)
 
-### Güvenlik İçin:
-- `batch_size`'ı azaltın (6 → 4)
-- `delay_between_requests`'i artırın (7 → 10)
-- `validation_strictness`'i "ultra_high" yapın
+### Git'e Gönderilmeyen Dosyalar:
+- `config.json` (gerçek API anahtarları)
+- `logs/` (log dosyaları)
+- `output/` (çıktı dosyaları)
+- `backups/` (yedek dosyaları)
+- `checkpoints/` (checkpoint dosyaları)
+
+## 🎯 Güncelleme Notları
+
+### v2.0 Güvenlik Güncellemesi:
+- ✅ Config dosyası güvenliği eklendi
+- ✅ `.gitignore` kuralları eklendi
+- ✅ `config_example.json` şablonu oluşturuldu
+- ✅ Canlı API key yönetimi güncellendi
 
 ---
 
-## 📈 Örnek Çıktı
-
-```
-🛡️ Ultra Safe Data Augmenter başlatılıyor...
-🔑 API Key 1 test ediliyor...
-✅ API Key 1 aktif
-🔑 API Key 2 test ediliyor...
-✅ API Key 2 aktif
-...
-🎯 12/12 API key aktif
-🚀 Ultra Safe Data Augmentation başlatıldı
-📊 Toplam 11,467 çift yüklendi
-📦 1,911 batch oluşturuldu
-📈 İlerleme: %15.2 - Batch 291
-✅ Batch 291 başarılı (12 varyant)
-...
-🎉 === ULTRA SAFE AUGMENTATION TAMAMLANDI! ===
-📊 Orijinal: 11,467 çift
-🆕 Yeni üretilen: 18,423 çift  
-📈 Toplam: 29,890 çift
-🔢 Çarpan: 2.6x
-💾 Dosyalar: output/ klasöründe
-```
-
-**Sistem hazır! 🚀 İyi çalışmalar!** 
+**⚠️ GÜVENLİK HATIRLATMASI**: 
+- API anahtarlarınızı asla Git'e commit etmeyin
+- Her zaman `config_example.json`'dan `config.json` oluşturun
+- Gerçek anahtarlarınızı sadece `config.json`'a yazın
+- `git status` ile config.json'ın tracked olmadığını kontrol edin 

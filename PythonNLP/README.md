@@ -2,6 +2,40 @@
 
 Bu modül, beslenme ve sağlık konularındaki PDF dosyalarından Google Gemini AI kullanarak otomatik soru-cevap çiftleri oluşturan kapsamlı bir sistemdir.
 
+## 🔐 GÜVENLİK VE KURULUM ÖNCESİ ÖNEMLİ NOTLAR
+
+### ⚠️ API Anahtarı Güvenliği
+**MUTLAKA OKUMANIZ GEREKEN GÜVENLİK BİLGİLERİ:**
+
+1. **API anahtarlarınızı asla Git'e commit etmeyin**
+2. **`config_example.json`'dan `config.json` oluşturun**
+3. **Gerçek API anahtarlarınızı sadece `config.json`'a yazın**
+
+### 🛠️ Güvenli Kurulum Adımları
+
+#### 1. Config Dosyası Oluşturun
+```powershell
+# Bu klasörde (PythonNLP):
+copy config_example.json config.json
+```
+
+#### 2. API Anahtarları Ekleyin
+`config.json` dosyasını açın ve placeholder'ları değiştirin:
+```json
+{
+  "api_keys": [
+    "AIzaSyYour_Real_API_Key_Here_1",
+    "AIzaSyYour_Real_API_Key_Here_2",
+    "AIzaSyYour_Real_API_Key_Here_3"
+  ]
+}
+```
+
+#### 3. API Anahtarını Alın
+- [Google AI Studio](https://aistudio.google.com/app/apikey) adresine gidin
+- Yeni API anahtarları oluşturun
+- **Bu anahtarları güvenli şekilde saklayın**
+
 ## 🚀 Modül Özellikleri
 
 - **Otomatik PDF İşleme**: Klasördeki tüm PDF'leri otomatik olarak işler
@@ -11,6 +45,7 @@ Bu modül, beslenme ve sağlık konularındaki PDF dosyalarından Google Gemini 
 - **Kalite Filtreleme**: Düşük kaliteli verileri otomatik filtreleme
 - **Konu Bazlı Gruplama**: Kaynaklara göre veri gruplama
 - **Kullanıcı Dostu Arayüz**: Menü tabanlı kontrol sistemi
+- **Güvenli API Yönetimi**: Config dosyası tabanlı anahtar yönetimi
 
 ## 📋 Gereksinimler
 
@@ -30,12 +65,17 @@ numpy==1.24.3
 
 ## ⚙️ Kurulum
 
-### Yöntem 1: Hızlı Kurulum (Önerilen)
+### Yöntem 1: Hızlı Güvenli Kurulum (Önerilen)
 ```powershell
-# Ana sistemi başlatın
+# 1. Config dosyası oluşturun
+copy config_example.json config.json
+
+# 2. config.json'ı düzenleyip API anahtarlarınızı ekleyin
+
+# 3. Ana sistemi başlatın
 python main.py
 
-# Menüden "1 - Sistem kurulumu yap" seçeneğini seçin
+# 4. Menüden "1 - Sistem kurulumu yap" seçeneğini seçin
 ```
 
 ### Yöntem 2: Manuel Kurulum
@@ -43,17 +83,24 @@ python main.py
 # 1. Gerekli paketleri yükle
 pip install -r requirements.txt
 
-# 2. Kurulum scriptini çalıştır
+# 2. Config dosyası oluştur
+copy config_example.json config.json
+
+# 3. API anahtarlarını config.json'a ekle
+
+# 4. Kurulum scriptini çalıştır
 python setup_qa_generator.py
 
-# 3. API anahtarını ayarla
+# 5. API anahtarını test et
 python setup_api_key.py
 ```
 
-### 3. API Anahtarı Yapılandırması
-1. [Google AI Studio](https://makersuite.google.com/app/apikey) adresine gidin
+### 3. Güvenli API Anahtarı Yapılandırması
+1. [Google AI Studio](https://aistudio.google.com/app/apikey) adresine gidin
 2. Yeni API anahtarı oluşturun
-3. `pdf_to_qa_gemini.py` dosyasında `YOUR_GEMINI_API_KEY_HERE` kısmını anahtarınızla değiştirin
+3. `config.json` dosyasında `YOUR_GEMINI_API_KEY_X` kısımlarını gerçek anahtarlarınızla değiştirin
+
+**UYARI:** Artık API anahtarlarını doğrudan kod dosyalarına yazmayın!
 
 ## 📁 Dosya Yapısı ve İşlevleri
 
@@ -65,9 +112,14 @@ python setup_api_key.py
 - Kullanıcı dostu menü sağlar
 - Tüm işlemleri koordine eder
 - Kurulum ve konfigürasyon yönetimi
+- Güvenli config dosyası yönetimi
 
-**Nasıl çalıştırılır:**
+**Güvenli çalıştırma:**
 ```powershell
+# Önce config.json oluşturun:
+copy config_example.json config.json
+# Sonra API anahtarlarınızı config.json'a ekleyin
+
 python main.py
 ```
 
@@ -84,81 +136,94 @@ python main.py
 **Ne yapar:**
 - PDF dosyalarını metin ve görsel olarak işler
 - Gemini AI ile soru-cevap çiftleri üretir
+- Config dosyasından API anahtarlarını okur
 - Çoklu format çıktı sağlar
 - Hata yönetimi ve logging
 
-**Nasıl çalıştırılır:**
+**Güvenli çalıştırma:**
 ```powershell
-# Doğrudan çalıştırma (gelişmiş kullanıcılar için)
+# Config dosyası hazır olduğundan emin olun
 python pdf_to_qa_gemini.py
 ```
 
-**Çalıştırmadan önce yapılması gerekenler:**
-1. API anahtarını dosyada güncelleyin
-2. `pdfs/` klasörüne PDF dosyalarını yerleştirin
-3. İşlem limitlerini kontrol edin
+### Konfigürasyon Dosyaları
+
+#### 3. `config_example.json` - Güvenli Config Şablonu
+**İçeriği:**
+```json
+{
+    "api_keys": [
+        "YOUR_GEMINI_API_KEY_1",
+        "YOUR_GEMINI_API_KEY_2",
+        "YOUR_GEMINI_API_KEY_3"
+    ],
+    "retry_settings": {
+        "max_retries": 3,
+        "retry_delay": 5,
+        "rate_limit_delay": 10
+    },
+    "chunk_settings": {
+        "chunk_size": 3000,
+        "chunk_overlap": 200
+    }
+}
+```
+
+**Önemli:** Bu dosya Git'e commit edilir ama gerçek API anahtarları içermez.
+
+#### 4. `config.json` - Gerçek Konfigürasyon
+**Önemli:** Bu dosya `.gitignore` ile Git'ten hariç tutulmuştur.
 
 ### Yardımcı Araçlar
 
-#### 3. `run_qa_generation.py` - Hızlı Başlatma Scripti
+#### 5. `run_qa_generation.py` - Hızlı Başlatma Scripti
 **Ne yapar:**
 - Tek komutla PDF işleme başlatır
+- Config dosyası kontrolü yapar
 - Ön kontrolleri yapar
 - Hızlı kurulum sağlar
 
-**Nasıl çalıştırılır:**
-```powershell
-python run_qa_generation.py
-```
-
-#### 4. `analyze_qa_data.py` - Veri Analizi ve Dönüştürme
+#### 6. `analyze_qa_data.py` - Veri Analizi ve Dönüştürme
 **Ne yapar:**
 - Oluşturulan verileri analiz eder
 - İstatistik raporları üretir
 - Format dönüştürmeleri yapar
 - Kalite kontrolü
 
-**Nasıl çalıştırılır:**
-```powershell
-python analyze_qa_data.py
-```
-
-#### 5. `setup_qa_generator.py` - Kurulum Scripti
+#### 7. `setup_qa_generator.py` - Kurulum Scripti
 **Ne yapar:**
 - Sistem gereksinimlerini kontrol eder
 - Klasör yapısını oluşturur
+- Config dosyası varlığını kontrol eder
 - Test işlemleri yapar
 
-#### 6. `setup_api_key.py` - API Anahtar Yapılandırıcı
+#### 8. `setup_api_key.py` - API Anahtar Yapılandırıcı
 **Ne yapar:**
-- API anahtarını güvenli şekilde kaydeder
+- Config dosyasından API anahtarlarını okur
 - Anahtar geçerliliğini test eder
-
-### Konfigürasyon Dosyaları
-
-#### 7. `config.json` - Sistem Ayarları
-**İçeriği:**
-- API konfigürasyonu
-- İşlem parametreleri
-- Çıktı formatları
-- Kalite filtreleri
+- Güvenli anahtar doğrulama
 
 ## 🚀 Kullanım Senaryoları
 
-### Scenario 1: İlk Kez Kullanım
+### Scenario 1: İlk Kez Güvenli Kullanım
 ```powershell
-# 1. Ana sistemi başlatın
+# 1. Config dosyası oluşturun
+copy config_example.json config.json
+
+# 2. API anahtarlarınızı config.json'a ekleyin
+# config.json dosyasını açın ve YOUR_GEMINI_API_KEY_X kısımlarını değiştirin
+
+# 3. Ana sistemi başlatın
 python main.py
 
-# 2. Menüden "1" seçin (Sistem kurulumu)
-# 3. API anahtarınızı girin
-# 4. PDF'lerinizi pdfs/ klasörüne yerleştirin
-# 5. Menüden "2" seçin (PDF işleme)
+# 4. Menüden "1" seçin (Sistem kurulumu)
+# 5. PDF'lerinizi pdfs/ klasörüne yerleştirin
+# 6. Menüden "2" seçin (PDF işleme)
 ```
 
 ### Scenario 2: PDF'leri Toplu İşleme
 ```powershell
-# Hızlı işleme için
+# Config hazır olduğundan emin olun
 python run_qa_generation.py
 ```
 
@@ -166,6 +231,12 @@ python run_qa_generation.py
 ```powershell
 # Oluşturulan verileri analiz etmek için
 python analyze_qa_data.py
+```
+
+### Scenario 4: API Anahtarı Test
+```powershell
+# API anahtarlarınızın çalışıp çalışmadığını test edin
+python setup_api_key.py
 ```
 
 ## 📊 Çıktı Formatları
@@ -196,180 +267,73 @@ soru,cevap,kaynak,sayfa
 {"soru": "...", "cevap": "...", "kaynak": "...", "sayfa": ...}
 ```
 
-## ⚠️ Önemli Notlar
+## ⚠️ Güvenlik Özellikleri
 
-### PDF Gereksinimleri:
-- PDF'ler metin çıkarılabilir formatta olmalı
-- Görsel içerikli PDF'ler desteklenir
-- Maksimum dosya boyutu: 100MB
-- Desteklenen diller: Türkçe, İngilizce
+### API Anahtarı Koruması
+- ✅ `config.json` Git'ten hariç tutuldu
+- ✅ `config_example.json` sadece placeholder içerir
+- ✅ Gerçek anahtarlar sadece local'de saklanır
+- ✅ `.gitignore` kuralları eksiksiz
 
-### API Limitleri:
-- Gemini API: Dakikada 60 istek
-- Büyük PDF'ler için işlem süresi uzun olabilir
-- İnternet bağlantısı kesintisinde işlem durur
+### Veri Güvenliği
+- Otomatik backup sistemi
+- Hata toleransı
+- Rate limiting koruması
+- Güvenli dosya işleme
 
-### Veri Kalitesi:
-- Oluşturulan sorular otomatik filtrelenir
-- Manuel kalite kontrolü önerilir
-- Tekrarlı içerikler temizlenir
+### Proje Güvenliği
+```
+# Bu dosyalar Git'e gönderilmez:
+config.json           # Gerçek API anahtarları
+logs/                 # Log dosyaları
+output/               # Çıktı dosyaları
+*.log                 # Log dosyaları
+```
 
 ## 🔧 Sorun Giderme
 
 ### Yaygın Hatalar:
+1. **Config Not Found**: `copy config_example.json config.json` komutunu çalıştırın
+2. **API Key Error**: `config.json`'da gerçek API anahtarlarınızı kontrol edin
+3. **Module Not Found**: `pip install -r requirements.txt` çalıştırın
+4. **File Not Found**: PDF'lerin `pdfs/` klasöründe olduğunu kontrol edin
 
-1. **PDF Okuma Hatası:**
+### Güvenlik Kontrolleri:
 ```powershell
-# PDF'in metin çıkarılabilir olduğunu kontrol edin
-python -c "import fitz; print(fitz.open('pdfs/dosya.pdf')[0].get_text())"
+# Config dosyasının Git'te olmadığını kontrol edin:
+git status
+
+# config.json dosyası "Untracked files" altında görünmelidir
 ```
 
-2. **API Anahtar Hatası:**
-```powershell
-# API anahtarını test edin
-python setup_api_key.py
-```
+### Debug Modları:
+Hata ayıklama için dosyalarda bulunan debug flaglerini aktifleştirin.
 
-3. **Bağımlılık Hatası:**
-```powershell
-# Paketleri yeniden yükleyin
-pip install -r requirements.txt --force-reinstall
-```
+## 📈 Performans İpuçları
 
-### Debug Modu:
-```powershell
-# Detaylı hata mesajları için
-python main.py --debug
-```
+1. **Çoklu API Anahtarı**: `config.json`'da birden fazla anahtar kullanın
+2. **Rate Limiting**: API limitlerini aşmamaya dikkat edin
+3. **Chunk Settings**: Büyük PDF'ler için chunk ayarlarını optimize edin
+4. **Retry Settings**: Hata durumlarında yeniden deneme ayarları
 
-## 📈 Performans İyileştirme
+## 📝 Dosya Güvenliği
 
-- **Küçük PDF'lerle başlayın** (test için)
-- **API çağrı sıklığını optimize edin**
-- **Çıktı dosyalarını düzenli temizleyin**
-- **System kaynakları limitlerini göz önünde bulundurun**
-├── requirements.txt          # Python gereksinimleri
-├── pdfs/                     # PDF dosyalarını buraya koyun
-│   ├── dosya1.pdf
-│   ├── dosya2.pdf
-│   └── ...
-└── çıktı dosyaları/
-    ├── pdf_qa_pairs.json     # Ana soru-cevap verisi
-    ├── qa_pairs_export.csv   # CSV formatında
-    ├── training_data.jsonl   # AI eğitimi için
-    ├── qa_by_topics.json     # Konulara göre gruplu
-    └── quality_qa_pairs.json # Filtrelenmiş kaliteli veri
-```
+### Git İçin Güvenli Dosyalar:
+- `README.md`
+- `requirements.txt`
+- `config_example.json`
+- `*.py` dosyaları
 
-## 🎯 Kullanım
+### Git'e Gönderilmeyen Dosyalar:
+- `config.json` (gerçek API anahtarları)
+- `logs/` (log dosyaları)
+- `*.log` (log dosyaları)
+- `pdfs/` (PDF dosyaları)
 
-### Ana Sistem
-```bash
-python main.py
-```
+---
 
-### Doğrudan Çalıştırma
-```bash
-# PDF'leri işle
-python run_qa_generation.py
-
-# Verileri analiz et
-python analyze_qa_data.py
-```
-
-## 📊 Çıktı Formatları
-
-### JSON Format
-```json
-[
-  {
-    "soru": "Beslenme nedir?",
-    "cevap": "Beslenme, vücudun büyüme, gelişme ve sağlıklı yaşam için gerekli besin öğelerini alması sürecidir.",
-    "kaynak": "beslenme-temelleri.pdf"
-  }
-]
-```
-
-### CSV Format
-Excel ve diğer araçlarda kullanım için.
-
-### JSONL Format (AI Eğitimi)
-```jsonl
-{"instruction": "Soru", "input": "", "output": "Cevap", "source": "kaynak.pdf"}
-```
-
-## ⚡ Performans
-
-- **İşleme Hızı**: PDF başına ~2-5 dakika
-- **Soru-Cevap Üretimi**: Sayfa başına 5-8 çift
-- **API Limitleri**: Dakikada 60 istek (otomatik bekleme)
-
-## 🔧 Konfigürasyon
-
-### Metin Parçalama
-```python
-chunk_size = 3000  # Karakter sayısı
-```
-
-### Soru-Cevap Miktarı
-```python
-# prompt içinde ayarlanabilir
-"5-8 adet soru-cevap çifti oluştur"
-```
-
-### Kalite Filtreleme
-```python
-min_answer_length = 10  # Minimum cevap kelime sayısı
-```
-
-## 🛠️ Sorun Giderme
-
-### API Hatası
-- API anahtarının doğru olduğundan emin olun
-- İnternet bağlantısını kontrol edin
-- API limitlerini kontrol edin
-
-### PDF Okuma Hatası
-- PDF dosyasının bozuk olmadığından emin olun
-- Dosya izinlerini kontrol edin
-- OCR gereksinimi olabilir (taranmış PDF'ler için)
-
-### Bellek Sorunu
-- Büyük PDF'leri küçük parçalara bölün
-- `chunk_size` değerini azaltın
-
-## 📈 Veri Kalitesi
-
-Sistem aşağıdaki kalite kontrolleri yapar:
-- Minimum soru uzunluğu (5 kelime)
-- Minimum cevap uzunluğu (10 kelime)
-- Soru işareti kontrolü
-- Cevap/soru oranı kontrolü
-
-## 🔄 Güncelleme
-
-```bash
-# Paketleri güncelle
-pip install -r requirements.txt --upgrade
-
-# Sistem dosyalarını yeniden indir
-git pull origin main
-```
-
-## 📞 Destek
-
-Sorunlar için:
-1. `main.py` menüsünden "Örnek verileri göster" ile test edin
-2. Log dosyalarını kontrol edin
-3. API anahtarını yeniden oluşturun
-
-## 📝 Notlar
-
-- İşlem uzun sürebilir (100+ PDF için saatler)
-- İnternet bağlantısı kesintisiz olmalı
-- API maliyetlerini göz önünde bulundurun
-- Ara kayıtlar otomatik olarak yapılır
-
-## 🎉 Örnekler
-
-70+ beslenme ve sağlık PDF'si ile test edilmiş, binlerce kaliteli soru-cevap çifti üretmiştir.
+**⚠️ GÜVENLİK HATIRLATMASI**: 
+- API anahtarlarınızı asla Git'e commit etmeyin
+- Her zaman `config_example.json`'dan `config.json` oluşturun
+- Gerçek anahtarlarınızı sadece `config.json`'a yazın
+- `git status` ile config.json'ın tracked olmadığını kontrol edin

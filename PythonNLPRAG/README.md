@@ -2,6 +2,40 @@
 
 Bu modül, profesyonel düzeyde PDF'den soru-cevap dataset üretimi için gelişmiş özellikler sunan production-ready bir sistemdir. Çoklu makine desteği, adaptif rate limiting ve güçlü API anahtar yönetimi ile donatılmıştır.
 
+## 🔐 GÜVENLİK VE KURULUM ÖNCESİ ÖNEMLİ NOTLAR
+
+### ⚠️ API Anahtarı Güvenliği
+**MUTLAKA OKUMANIZ GEREKEN GÜVENLİK BİLGİLERİ:**
+
+1. **API anahtarlarınızı asla Git'e commit etmeyin**
+2. **`config_example.json`'dan `config.json` oluşturun**
+3. **Gerçek API anahtarlarınızı sadece `config.json`'a yazın**
+
+### 🛠️ Güvenli Kurulum Adımları
+
+#### 1. Config Dosyası Oluşturun
+```powershell
+# Bu klasörde (PythonNLPRAG):
+copy config_example.json config.json
+```
+
+#### 2. API Anahtarları Ekleyin
+`config.json` dosyasını açın ve placeholder'ları değiştirin:
+```json
+{
+  "api_keys": [
+    "AIzaSyYour_Real_API_Key_Here_1",
+    "AIzaSyYour_Real_API_Key_Here_2",
+    "AIzaSyYour_Real_API_Key_Here_3"
+  ]
+}
+```
+
+#### 3. API Anahtarını Alın
+- [Google AI Studio](https://aistudio.google.com/app/apikey) adresine gidin
+- Yeni API anahtarları oluşturun
+- **Bu anahtarları güvenli şekilde saklayın**
+
 ## 🚀 Modül Özellikleri
 
 - **Production-Ready Mimari**: Endüstriyel seviye kod kalitesi
@@ -11,6 +45,7 @@ Bu modül, profesyonel düzeyde PDF'den soru-cevap dataset üretimi için geliş
 - **Resume Functionality**: Kesintiye uğrayan işlemleri kaldığı yerden devam ettirme
 - **Detaylı Logging**: Kapsamlı hata takibi ve performans izleme
 - **Yapılandırılabilir Çıktı**: Esnek dataset formatları
+- **Gelişmiş API Manager**: Hot-swap API key desteği
 
 ## 📋 Gereksinimler
 
@@ -33,23 +68,35 @@ Pillow
 pip install -r requirements.txt
 ```
 
-### 2. Konfigürasyon Dosyasını Ayarlayın
-`config.json` dosyasını düzenleyin:
+### 2. Güvenli Konfigürasyon
+```powershell
+# Config dosyası oluşturun
+copy config_example.json config.json
+
+# config.json'ı düzenleyip gerçek API anahtarlarınızı ekleyin
+```
+
+### 3. Konfigürasyon Ayarları
+`config.json` dosyasında ayarlayın:
 
 ```json
 {
   "api_keys": [
     "YOUR_GEMINI_API_KEY_1",
-    "YOUR_GEMINI_API_KEY_2",
+    "YOUR_GEMINI_API_KEY_2", 
     "YOUR_GEMINI_API_KEY_3"
   ],
-  "pdf_directory": "pdfs",
-  "output_directory": "output_json",
-  "questions_per_page": 3,
-  "min_delay_between_calls": 1,
-  "max_delay_between_calls": 5,
+  "model_name": "gemini-1.5-flash-latest",
+  "pdf_folder": "pdfs",
+  "output_folder": "output_json",
+  "output_filename": "toplam_egitim_veriseti.jsonl",
+  "max_questions_per_pdf": 30,
+  "num_workers": 2,
   "machine_id": 0,
-  "total_machines": 1
+  "total_machines": 1,
+  "adaptive_delay": true,
+  "min_delay_between_calls": 5,
+  "max_delay_between_calls": 30
 }
 ```
 
@@ -66,79 +113,87 @@ pip install -r requirements.txt
 - Hata toleransı ve recovery
 - Thread-safe işlemler
 
-**Nasıl çalıştırılır:**
+**Güvenli çalıştırma:**
 ```powershell
-# Temel kullanım
-python main.py
+# Önce config.json oluşturun ve API anahtarlarını ekleyin
+copy config_example.json config.json
 
-# Komut satırı parametreleri ile
-python main.py --config config.json --output-dir output_json --questions-per-page 5
+# Sonra çalıştırın
+python main.py
 ```
 
-**Çalıştırmadan önce yapılması gerekenler:**
-1. `config.json` dosyasını yapılandırın
-2. PDF dosyalarını `pdfs/` klasörüne yerleştirin
-3. API anahtarlarınızı ekleyin
-4. Çıktı klasörü permissionlarını kontrol edin
-
-#### 2. `main_enhanced.py` - Gelişmiş Özelliklerle
+#### 2. `enhanced_pdf_processor.py` - Gelişmiş PDF İşleyici
 **Ne yapar:**
 - Gelişmiş görsel işleme
 - Multi-modal AI entegrasyonu
 - Zengin metadata çıktısı
-- Performans optimizasyonları
+- Config hot-reload desteği
 
-**Nasıl çalıştırılır:**
-```powershell
-python main_enhanced.py --verbose --debug
-```
-
-#### 3. `main_backup.py` - Yedek Sistem
+#### 3. `pdf_api_manager.py` - Gelişmiş API Yönetimi
 **Ne yapar:**
-- Ana sistemin yedek versiyonu
-- Basitleştirilmiş işleme mantığı
-- Emergency fallback
+- API anahtarlarını test eder
+- Otomatik failover
+- Hot-swap API key desteği
+- Performans izleme
+
+**Özellikler:**
+- 🔄 **Hot Reload**: API anahtarları çalışma sırasında eklenebilir
+- 🧪 **Auto Test**: Yeni anahtarlar otomatik test edilir
+- 📊 **Live Monitoring**: Aktif anahtar sayısı takibi
+- ⚡ **Instant Update**: Sistem durmuyor
+
+#### 4. `add_api_key_pdf.py` - Canlı API Key Yönetimi
+**Ne yapar:**
+- Sistem çalışırken API anahtarı ekleme
+- Otomatik test ve doğrulama
+- Config dosyası güncelleme
+
+**Kullanım:**
+```powershell
+# Ana sistem çalışırken başka bir terminal açın:
+python add_api_key_pdf.py
+```
 
 ### Konfigürasyon Yönetimi
 
-#### 4. `config.json` - Sistem Konfigürasyonu
+#### 5. `config_example.json` - Güvenli Config Şablonu
 **İçeriği:**
 ```json
 {
-  "api_keys": ["key1", "key2", "key3"],
-  "pdf_directory": "pdfs",
-  "output_directory": "output_json", 
-  "questions_per_page": 3,
-  "min_delay_between_calls": 1,
-  "max_delay_between_calls": 5,
-  "machine_id": 0,
-  "total_machines": 1,
-  "enable_image_processing": true,
-  "enable_resume": true,
-  "log_level": "INFO",
-  "max_retries": 3,
-  "timeout_seconds": 30
+  "api_keys": [
+    "YOUR_GEMINI_API_KEY_1",
+    "YOUR_GEMINI_API_KEY_2",
+    "YOUR_GEMINI_API_KEY_3"
+  ],
+  // diğer ayarlar placeholder olarak
 }
 ```
 
+**Önemli:** Bu dosya Git'e commit edilir ama gerçek API anahtarları içermez.
+
+#### 6. `config.json` - Gerçek Konfigürasyon
+**Önemli:** Bu dosya `.gitignore` ile Git'ten hariç tutulmuştur.
+
 ## 🚀 Kullanım Senaryoları
 
-### Scenario 1: Tek Makine Basit İşleme
+### Scenario 1: İlk Kez Güvenli Kullanım
 ```powershell
-# 1. Konfigürasyonu hazırlayın
-cp config.json.example config.json
-# API anahtarlarınızı ekleyin
+# 1. Config dosyası oluşturun
+copy config_example.json config.json
 
-# 2. PDF'leri yerleştirin
+# 2. API anahtarlarınızı config.json'a ekleyin
+# config.json dosyasını açın ve YOUR_GEMINI_API_KEY_X kısımlarını değiştirin
+
+# 3. PDF'leri yerleştirin
 mkdir pdfs
 # PDF dosyalarınızı pdfs/ klasörüne kopyalayın
 
-# 3. İşlemi başlatın
+# 4. İşlemi başlatın
 python main.py
 ```
 
 ### Scenario 2: Çoklu Makine Dağıtık İşleme
-**Makine 1:**
+**Makine 1 (config.json):**
 ```json
 {
   "machine_id": 0,
@@ -147,7 +202,7 @@ python main.py
 }
 ```
 
-**Makine 2:**
+**Makine 2 (config.json):**
 ```json
 {
   "machine_id": 1,
@@ -156,33 +211,20 @@ python main.py
 }
 ```
 
-**Makine 3:**
-```json
-{
-  "machine_id": 2,
-  "total_machines": 3,
-  "api_keys": ["key5", "key6"]
-}
+### Scenario 3: Çalışma Sırasında API Key Ekleme
+```powershell
+# Terminal 1: Ana işlem
+python main.py
+
+# Terminal 2: Yeni API key ekle
+python add_api_key_pdf.py
+# Sistem 5 batch içinde yeni anahtarları algılayacak
 ```
 
+### Scenario 4: API Test ve Doğrulama
 ```powershell
-# Her makinede aynı anda çalıştırın
-python main.py --config config_machine1.json
-```
-
-### Scenario 3: Kesintiye Uğrayan İşlemi Devam Ettirme
-```powershell
-# İşlem otomatik olarak kaldığı yerden devam eder
-python main.py --resume
-```
-
-### Scenario 4: Debug ve Monitoring
-```powershell
-# Detaylı logging ile
-python main.py --log-level DEBUG --verbose
-
-# Performans izleme ile
-python main.py --enable-monitoring
+# API anahtarlarınızı test edin
+python api_test.py
 ```
 
 ## 📊 Çıktı Formatları
@@ -190,7 +232,6 @@ python main.py --enable-monitoring
 ### JSONL Format (ML için optimize)
 ```jsonl
 {"question": "Hangi besinler protein açısından zengindir?", "answer": "Et, balık, yumurta, baklagiller...", "source": "beslenme.pdf", "page": 15, "metadata": {"confidence": 0.95, "timestamp": "2025-06-28T10:30:00Z"}}
-{"question": "Günlük su ihtiyacı nedir?", "answer": "Yetişkin bir kişi günde 2-3 litre su...", "source": "beslenme.pdf", "page": 16, "metadata": {"confidence": 0.92, "timestamp": "2025-06-28T10:30:05Z"}}
 ```
 
 ### JSON Format
@@ -198,153 +239,90 @@ python main.py --enable-monitoring
 [
   {
     "question": "Hangi besinler protein açısından zengindir?",
-    "answer": "Et, balık, yumurta, baklagiller protein açısından zengin besinlerdir...",
+    "answer": "Et, balık, yumurta, baklagiller...",
     "source": "beslenme.pdf",
     "page": 15,
     "metadata": {
       "confidence": 0.95,
-      "processing_time": 2.3,
-      "api_key_used": "key1",
       "timestamp": "2025-06-28T10:30:00Z"
     }
   }
 ]
 ```
 
-## ⚙️ Gelişmiş Özellikler
+## ⚠️ Güvenlik Özellikleri
 
-### 1. Adaptif Rate Limiting
-```python
-# Sistem otomatik olarak API limitlerini yönetir
-# Rate limit algılandığında gecikme süresi artırılır
-# Başarılı çağrılarda gecikme azaltılır
+### API Anahtarı Koruması
+- ✅ `config.json` Git'ten hariç tutuldu
+- ✅ `config_example.json` sadece placeholder içerir
+- ✅ Gerçek anahtarlar sadece local'de saklanır
+- ✅ `.gitignore` kuralları eksiksiz
+
+### Veri Güvenliği
+- Otomatik checkpoint sistemi
+- Resume functionality
+- Hata toleransı
+- Rate limiting koruması
+
+### Proje Güvenliği
 ```
-
-### 2. API Anahtar Rotasyonu
-```python
-# Çoklu API anahtarı otomatik rotasyonu
-# Hatalı anahtarlar otomatik blacklist
-# Failover mekanizması
-```
-
-### 3. Resume Functionality
-```python
-# İşlenen dosyalar otomatik kaydedilir
-# Kesinti sonrası otomatik devam
-# Duplicate prevention
-```
-
-### 4. Multi-Machine Coordination
-```python
-# Machine ID bazlı dosya dağıtımı
-# Collision prevention
-# Distributed load balancing
-```
-
-## 📈 Performans Optimizasyonu
-
-### Memory Management:
-```python
-# Büyük PDF'ler için sayfa bazlı işleme
-# Garbage collection optimizasyonu
-# Memory leak prevention
-```
-
-### API Optimizasyonu:
-```python
-# Intelligent request batching
-# Connection pooling
-# Retry strategies with exponential backoff
-```
-
-### Logging ve Monitoring:
-```python
-# Structured logging (JSON format)
-# Performance metrics
-# Error tracking
-# API usage statistics
+# Bu dosyalar Git'e gönderilmez:
+config.json           # Gerçek API anahtarları
+logs/                 # Log dosyaları  
+output_json/          # Çıktı dosyaları
+checkpoints/          # Checkpoint dosyaları
 ```
 
 ## 🔧 Sorun Giderme
 
-### Yaygın Hatalar ve Çözümleri:
+### Yaygın Hatalar:
+1. **Config Not Found**: `copy config_example.json config.json` komutunu çalıştırın
+2. **API Key Error**: `config.json`'da gerçek API anahtarlarınızı kontrol edin
+3. **Permission Error**: Klasör yazma izinlerini kontrol edin
+4. **Module Not Found**: `pip install -r requirements.txt` çalıştırın
 
-#### 1. API Key Hatası
+### Güvenlik Kontrolleri:
 ```powershell
-# API anahtarlarını test edin
-python -c "
-import google.generativeai as genai
-genai.configure(api_key='YOUR_API_KEY')
-model = genai.GenerativeModel('gemini-pro')
-response = model.generate_content('Test')
-print('API Key çalışıyor!')
-"
+# Config dosyasının Git'te olmadığını kontrol edin:
+git status
+
+# config.json dosyası "Untracked files" altında görünmelidir
 ```
 
-#### 2. Memory Error
-```json
-{
-  "questions_per_page": 2,
-  "process_in_chunks": true,
-  "chunk_size": 10
-}
-```
-
-#### 3. Rate Limit Aşımı
-```json
-{
-  "min_delay_between_calls": 3,
-  "max_delay_between_calls": 10,
-  "max_retries": 5
-}
-```
-
-#### 4. PDF İşleme Hatası
+### Debug Modları:
 ```powershell
-# PDF'in durumunu kontrol edin
-python -c "
-import fitz
-doc = fitz.open('pdfs/problematic.pdf')
-print(f'Sayfa sayısı: {len(doc)}')
-print(f'İlk sayfa metni: {doc[0].get_text()[:100]}')
-"
+# Detaylı logging ile
+python main.py --log-level DEBUG
+
+# API test modu
+python api_test.py
 ```
 
-### Debug Komutları:
-```powershell
-# Detaylı hata mesajları
-python main.py --debug --log-level DEBUG
+## 📈 Performans İpuçları
 
-# API çağrı istatistikleri
-python main.py --show-api-stats
+1. **Çoklu API Anahtarı**: Birden fazla anahtar kullanarak hızlandırın
+2. **Adaptif Delay**: Sistem otomatik olarak uygun gecikme ayarlar
+3. **Resume Feature**: Kesintilerde kaldığı yerden devam eder
+4. **Hot-Swap Keys**: Çalışma sırasında yeni anahtarlar ekleyin
 
-# Memory usage monitoring
-python main.py --monitor-memory
-```
+## 📝 Dosya Güvenliği
 
-## 📊 Log Analizi
+### Git İçin Güvenli Dosyalar:
+- `README.md`
+- `requirements.txt` 
+- `config_example.json`
+- `*.py` dosyaları
 
-### Log Dosyası Konumu:
-```
-data_generator.log
-```
+### Git'e Gönderilmeyen Dosyalar:
+- `config.json` (gerçek API anahtarları)
+- `logs/` (log dosyaları)
+- `output_json/` (çıktı dosyaları)
+- `checkpoints/` (checkpoint dosyaları)
 
-### Log Format Örneği:
-```
-2025-06-28 10:30:00,123 - INFO - PDFToQAGenerator - Starting PDF processing
-2025-06-28 10:30:01,456 - INFO - PDFToQAGenerator - Processing: beslenme.pdf (25 pages)
-2025-06-28 10:30:02,789 - DEBUG - PDFToQAGenerator - API call successful, response time: 1.2s
-2025-06-28 10:30:05,012 - WARNING - PDFToQAGenerator - Rate limit approached, increasing delay
-2025-06-28 10:30:10,345 - ERROR - PDFToQAGenerator - API error: 429 Too Many Requests
-2025-06-28 10:30:15,678 - INFO - PDFToQAGenerator - Retrying with delay: 5s
-```
+---
 
-## 🎯 Best Practices
-
-1. **API Anahtar Yönetimi**: En az 3 farklı anahtar kullanın
-2. **Dosya Organizasyonu**: PDF'leri kategori bazlı klasörlerde organize edin
-3. **Backup Strategy**: Çıktı dosyalarını düzenli yedekleyin
-4. **Monitoring**: Log dosyalarını düzenli kontrol edin
-5. **Resource Management**: Sistem kaynaklarını izleyin
-
-Bu gelişmiş sistem ile büyük ölçekli PDF işleme ve dataset üretimi projelerinizi professional seviyede gerçekleştirebilirsiniz.
+**⚠️ GÜVENLİK HATIRLATMASI**: 
+- API anahtarlarınızı asla Git'e commit etmeyin
+- Her zaman `config_example.json`'dan `config.json` oluşturun
+- Gerçek anahtarlarınızı sadece `config.json`'a yazın
+- `git status` ile config.json'ın tracked olmadığını kontrol edin
